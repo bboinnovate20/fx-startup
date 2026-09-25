@@ -1,169 +1,197 @@
-import { useMemo, useState } from "react";
-import {
-  currencies,
-  money,
-  number,
-  pairRates,
-  providerSeed,
-  type Currency,
-} from "./data/fx-data";
-import { ButtonBadge } from "./ui/ButtonBadges";
-import { LiveIndicator } from "./ui/LiveIndicator";
+"use client";
+
+import { useState } from "react";
+import { currencies, money, number, providerSeed, type Currency } from "./data/fx-data";
+import type { ProviderInfo } from "./data/providers";
+import { ArrowIcon } from "./ui/ArrowIcon";
 import { SectionHeading } from "./ui/SectionHeading";
 
 export function ProviderComparison({
   from,
   to,
   amount,
+  setAmount,
   rate,
+  providers,
 }: {
   from: Currency;
   to: Currency;
-  amount: number;
-  rate: number;
+  amount: string;
+  setAmount: (amount: string) => void;
+  rate: number | null;
+  providers: ProviderInfo[];
 }) {
-  const [showAll, setShowAll] = useState(false);
-  const providers = useMemo(
-    () =>
-      providerSeed
-        .map((provider) => ({
-          ...provider,
-          rate: provider.rate * (rate / pairRates["GBP-NGN"]),
-        }))
-        .sort((a, b) => b.rate - a.rate),
-    [rate],
-  );
+  const [shareStatus, setShareStatus] = useState("Share");
+  const amountValue = Number(amount.replaceAll(",", "")) || 0;
+  const scale = rate ? rate / providerSeed[0].rate : 0;
+  const results = providerSeed
+    .map((provider) => {
+      const directoryEntry = providers.find((item) => item.id === provider.id);
+      const payout = amountValue * provider.rate * scale;
+      return { ...provider, logo: directoryEntry?.logo, payout };
+    })
+    .sort((a, b) => b.payout - a.payout);
+  const lowestProviderRate = Math.min(...providerSeed.map((provider) => provider.rate));
+
+  async function shareComparison() {
+    const url = new URL("/", window.location.origin);
+    url.searchParams.set("sendAmount", amount.replaceAll(",", "") || "0");
+    url.searchParams.set("sourceCurrency", from);
+    url.searchParams.set("targetCurrency", to);
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Compare currency rates",
+          text: `Compare ${from} to ${to} rates`,
+          url: url.toString(),
+        });
+        setShareStatus("Shared");
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url.toString());
+        setShareStatus("Link copied");
+      } else {
+        window.prompt("Copy this comparison link", url.toString());
+        setShareStatus("Link ready");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareStatus("Share failed");
+    }
+  }
+
   return (
-    <section
-      className={`mb-[53px] max-[700px]:mb-[38px] compare-section`}
-      id="compare"
-    >
+    <section className="mb-[55px] font-display max-[700px]:mb-[40px]" id="compare">
       <SectionHeading
-        eyebrow="COMPARE YOUR OPTIONS"
-        title="Make your money count."
-        description="See what your transfer could look like across providers."
-        action={
-          <button
-            className={`border-0 bg-none text-primary text-[10px] font-[650] p-[8px_0] whitespace-nowrap [&_span]:text-[15px]
-                [&_span]:ml-[4px] max-[700px]:text-[8px] max-[700px]:pt-[19px] max-[390px]:text-[7px]`}
-            onClick={() => setShowAll(!showAll)}
-          >
-            {showAll ? "Show top rates" : "View all exchanges"}
-            <span> →</span>
-          </button>
-        }
+        eyebrow="SIDE BY SIDE"
+        title="Compare your options"
+        description="See how much your recipient could get from each provider."
       />
-      <div
-        className={`border border-[var(--line)] rounded-[11px] bg-white overflow-hidden shadow-[0_5px_18px_#23365008]`}
-      >
-        <div
-          className={`flex items-center justify-between p-[18px_21px] [&_p]:text-[9px] [&_p]:text-[#8895a5] [&_p]:m-[5px_0_0] [&_p_span]:p-[0_4px]
-            max-[700px]:p-[14px] max-[700px]:[&_p]:text-[8px] max-[700px]:[&>_.live-label]:text-[7px] max-[700px]:[&>_.live-label]:gap-[5px] max-[390px]:[&_p]:text-[7px]`}
-        >
-          <div>
-            <strong
-              className={`text-[14px] text-navy flex items-center gap-[6px] [&_span]:text-[#9ba8b8] [&_span]:p-[0_3px] max-[700px]:text-[12px]
-                max-[390px]:text-[11px]`}
-            >
-              {currencies[from].flag} {from}
-              <span>→</span>
-              {currencies[to].flag} {to}
-            </strong>
-            <p>
-              For {money(amount, from)} sent <span>·</span> Sample comparison,
-              fees may vary
-            </p>
+
+
+      <div className="overflow-hidden rounded-[24px] border border-[#e6ebf2] bg-white shadow-[0_16px_45px_rgba(18,35,65,0.07)]">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-2 border-b border-[#e9edf3] bg-[#f8faff] p-5 sm:grid-cols-[minmax(220px,1fr)_auto] sm:grid-rows-[auto_auto] sm:items-center sm:p-6">
+          <span className="text-lg font-semibold text-navy sm:col-start-1 sm:row-start-1">You send</span>
+          <label htmlFor="compare-send-amount" className="flex h-[58px] min-w-0 items-center gap-3 rounded-[16px] border border-[#d7dfeb] bg-white px-4 transition focus-within:border-2 focus-within:border-navy sm:col-start-1 sm:row-start-2">
+              <img src={currencies[from].icon} alt="" className="h-7 w-7 rounded-full object-cover" />
+              <input
+                id="compare-send-amount"
+                aria-label={`Amount in ${from}`}
+                inputMode="decimal"
+                placeholder="Enter amount to convert"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, ""))}
+                className="min-w-0 flex-1 border-0 bg-transparent text-xl font-bold text-navy outline-none"
+              />
+              <span className="text-sm font-bold text-[#64748b]">{from}</span>
+          </label>
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:col-start-2 sm:row-start-2">
+          <button
+            type="button"
+            onClick={shareComparison}
+            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-3xl border border-primary bg-primary px-6 text-sm font-medium text-white transition hover:border-primary-hover hover:bg-primary-hover"
+            aria-live="polite"
+          >
+            <img src="/icons/plane-send.svg" alt="" className="h-4 w-4 brightness-0 invert" />
+            {shareStatus}
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {[from, to].map((currency) => (
+                <img
+                  key={currency}
+                  src={currencies[currency].icon}
+                  alt=""
+                  className="h-9 w-9 rounded-full border-[3px] border-[#f8faff] object-cover"
+                />
+              ))}
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#75839a]">Exchange rate</div>
+              <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-navy">
+                1 {from} <ArrowIcon className="h-3 w-3 text-primary" /> {rate ? `${number(rate, 2)} ${to}` : `— ${to}`}
+              </div>
+            </div>
           </div>
-          <LiveIndicator>Sample rates</LiveIndicator>
+
         </div>
-        <div
-          className={`grid grid-cols-[1.4fr_1fr_0.95fr_1fr_96px] items-center gap-x-[12px] pl-[20px] pr-[18px] bg-[#f7f9fc] border-t border-t-[#edf0f4]
-            border-b border-b-[#edf0f4] min-h-[31px] text-[#8491a2] text-[8px] font-extrabold tracking-[0.75px] [&_span:nth-last-child(-n_+_2)]:text-right max-[900px]:grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr_78px]
-            max-[900px]:pl-[14px] max-[900px]:pr-[13px] max-[700px]:hidden`}
-        >
-          <span>PROVIDER</span>
-          <span>EXCHANGE RATE</span>
-          <span>TRANSFER FEE</span>
-          <span>YOU RECEIVE</span>
-          <span />
+
+
         </div>
-        <div className={`provider-list`}>
-          {(showAll ? providers : providers.slice(0, 3)).map(
-            (provider, index) => (
+
+        <div className="space-y-3 p-4 sm:p-6">
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[16px] border border-[#e1e9f5] bg-[#f4f7fc] px-4 py-3.5 sm:px-5">
+        <p className="m-0 text-sm leading-relaxed text-navy">
+          <strong className="font-semibold">Want a better rate?</strong>{" "}
+          Set a rate alert and we’ll let you know when it reaches your target.
+        </p>
+        <a href="#alerts" className=" shrink-0 rounded-full bg-primary px-6 py-3  font-semibold text-white transition hover:bg-primary-hover">
+          Set an alert
+        </a>
+      </div>
+          {rate ? results.map((provider, index) => {
+            const isBest = index === 0;
+            const difference = ((provider.rate / lowestProviderRate) - 1) * 100;
+            const roundedDifference = Math.round(difference * 10) / 10;
+            const trend = roundedDifference > 0 ? "up" : roundedDifference < 0 ? "down" : "equal";
+            const trendIcon = trend === "equal" ? "/icons/arrow-right.svg" : `/icons/arrow-trending-${trend}.svg`;
+            return (
               <article
-                className={`grid grid-cols-[1.4fr_1fr_0.95fr_1fr_96px] items-center gap-x-[12px] pl-[20px] pr-[18px] relative min-h-[70px]
-                  border-b border-b-[#eef1f4] max-[900px]:grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr_78px] max-[900px]:pl-[14px] max-[900px]:pr-[13px] max-[700px]:grid-cols-[1fr_auto] max-[700px]:gap-y-[7px] max-[700px]:p-[11px_12px] max-[700px]:min-h-[0]`}
-                key={provider.name}
+                key={provider.id}
+                className={`rounded-[70px] p-4 transition-colors sm:p-5 ${isBest ? "bg-primary text-white" : "bg-[#f0f2f5] text-navy"}`}
               >
-                <div
-                  className={`flex items-center gap-[9px] [&_b]:block [&_small]:block [&_b]:text-[10px] [&_b]:text-[#263952] [&_small]:text-[8px]
-                    [&_small]:text-[#929eae] [&_small]:mt-[3px] max-[700px]:col-[1] max-[700px]:row-[1] max-[390px]:[&_b]:text-[9px] max-[390px]:[&_small]:text-[7px]`}
-                >
-                  <span
-                    className={`w-[31px] h-[31px] rounded-[8px] grid place-items-center font-extrabold text-[13px] [&.wise]:bg-[#e8f7ef] [&.wise]:text-[#1a9a61] [&.sendwave]:bg-[#eaf2ff] [&.sendwave]:text-[#3973ca] [&.remitly]:bg-[#fff0e5] [&.remitly]:text-[#d7783d] [&.worldremit]:bg-[#f1ebfc] [&.worldremit]:text-[#785bc0] max-[390px]:w-[28px] max-[390px]:h-[28px] ${provider.className}`}
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <div className={`grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-white sm:h-14 sm:w-14 ${provider.logo ? "" : "border border-black/5"}`}>
+                    {provider.logo ? (
+                      <img src={provider.logo} alt={`${provider.name} logo`} className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <span className="text-lg font-extrabold text-primary">{provider.mark}</span>
+                    )}
+                  </div>
+                  <div className="min-w-[64px] flex-1 sm:min-w-[80px]">
+                    <div className={`truncate text-base font-bold sm:text-lg ${isBest ? "text-white" : "text-navy"}`}>
+                      {provider.name}{isBest && <span className="ml-2 hidden rounded-full bg-white/20 px-2 py-1 align-middle text-[10px] font-semibold sm:inline">Best rate</span>}
+                    </div>
+                    <div className={`mt-1 text-xs sm:text-sm ${isBest ? "text-white/85" : "text-[#68768a]"}`}>
+                      {provider.fee === 0 ? "No transfer fee" : `Est. ${money(provider.fee * scale, from)} fee`}
+                      <span className="mx-1.5" aria-hidden="true">·</span>{provider.time}
+                    </div>
+                  </div>
+                  <div
+                    aria-label={`${provider.name} payout is ${roundedDifference === 0 ? "the lowest shown" : `${number(roundedDifference, 1)} percent higher than the lowest shown`}`}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-bold sm:px-3 sm:text-sm ${isBest ? "bg-white/15 text-white" : "bg-[#e6f7ef] text-[#16804f]"}`}
                   >
-                    {provider.mark}
-                  </span>
-                  <span>
-                    <b>{provider.name}</b>
-                    <small>{provider.time}</small>
-                  </span>
-                </div>
-                <div
-                  className={`[&_small]:block [&_small]:text-[8px] [&_small]:text-[#929eae] [&_small]:mt-[3px] [&_b]:text-[11px] [&_b]:text-[#263852] max-[700px]:col-[2] max-[700px]:row-[1]
-                    max-[700px]:text-right max-[700px]:[&_small]:[display:inline] max-[700px]:[&_small]:ml-[4px] max-[390px]:[&_b]:text-[10px]`}
-                >
-                  <b>{number(provider.rate)}</b>
-                  <small>
-                    1 {from} = {to}
-                  </small>
-                </div>
-                <div
-                  className={`[&_small]:block [&_small]:text-[8px] [&_small]:text-[#929eae] [&_small]:mt-[3px] [&_b]:text-[9px] [&_b]:text-[#53627a] [&_b]:[font-weight:550] max-[700px]:col-[1]
-                    max-[700px]:row-[2] max-[700px]:pl-[40px] max-[700px]:[&_small]:[display:inline] max-[700px]:[&_small]:ml-[4px] max-[390px]:[&_small]:text-[7px]`}
-                >
-                  <b>
-                    {provider.fee === 0
-                      ? "No fee"
-                      : `${money(provider.fee, from)} fee`}
-                  </b>
-                  <small>Sample estimate</small>
-                </div>
-                <div
-                  className={`[&_small]:block [&_small]:text-[8px] [&_small]:text-[#929eae] [&_small]:mt-[3px] [&_b]:text-[11px] [&_b]:text-[#172b47] max-[700px]:col-[2] max-[700px]:row-[2]
-                    max-[700px]:text-right max-[700px]:[&_small]:[display:inline] max-[700px]:[&_small]:ml-[4px] max-[390px]:[&_small]:text-[7px] max-[390px]:[&_b]:text-[10px]`}
-                >
-                  <b>{money(amount * provider.rate, to)}</b>
-                  <small>Estimated amount</small>
-                </div>
-                <div
-                  className={`flex items-center justify-end gap-[7px] max-[900px]:gap-[4px] max-[700px]:absolute max-[700px]:hidden`}
-                >
-                  {index === 0 && <ButtonBadge variant="best-rate">BEST RATE</ButtonBadge>}
-                  <a
-                    href="#about"
-                    aria-label={`Learn about ${provider.name}`}
-                    className={`grid place-items-center w-[26px] h-[26px] border border-[#e1e7ef] rounded-[6px] text-[#687993] text-[12px]
-                        [&:hover]:border-[#a9c4f5] [&:hover]:text-primary`}
-                  >
-                    ↗
-                  </a>
+                    <span
+                      aria-hidden="true"
+                      className={`h-3 w-3 ${isBest ? "bg-white" : "bg-[#14532d]"}`}
+                      style={{
+                        mask: `url('${trendIcon}') center / contain no-repeat`,
+                        WebkitMask: `url('${trendIcon}') center / contain no-repeat`,
+                      }}
+                    />
+                    {roundedDifference > 0 ? "+" : ""}{number(roundedDifference, 1)}%
+                    <span className="hidden font-medium sm:inline">
+                      {roundedDifference > 0 ? "higher" : "lowest"}
+                    </span>
+                  </div>
+                  <div className={`shrink-0 text-right text-sm font-extrabold sm:text-xl ${isBest ? "text-white" : "text-navy"}`}>
+                    {money(provider.payout, to)}
+                    <div className={`mt-0.5 text-[10px] font-medium sm:text-xs ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>recipient gets</div>
+                  </div>
                 </div>
               </article>
-            ),
+            );
+          }) : (
+            <div className="rounded-[18px] bg-[#f6f8fb] px-5 py-8 text-center text-sm text-[#68768a]">
+              Estimates aren’t available for {from} to {to} yet.
+            </div>
           )}
         </div>
-        <div
-          className={`flex justify-between gap-[14px] p-[11px_20px] text-[#929eac] text-[8px] leading-[1.5] [&_a]:text-[#5877aa]
-            [&_a]:whitespace-nowrap [&_a_span]:ml-[4px] max-[700px]:p-[10px_12px] max-[700px]:text-[7px] max-[390px]:gap-[8px] max-[390px]:[&_a]:text-[6px]`}
-        >
-          <span>
-            ⓘ Sample values for design preview; provider rates and fees are not
-            live.
-          </span>
-          <a href="#about">
-            How comparisons work <span>↗</span>
-          </a>
+
+        <div className="border-t border-[#e9edf3] px-5 py-4 text-center text-xs text-[#8490a1]">
+          Sample estimates only. Rates and fees are not live quotes.
         </div>
       </div>
     </section>

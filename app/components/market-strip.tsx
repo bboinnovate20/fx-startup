@@ -1,3 +1,5 @@
+import { ArrowIcon } from "./ui/ArrowIcon";
+
 export function MarketStrip() {
   return (
     <div
@@ -20,7 +22,7 @@ export function MarketStrip() {
         >
           <span>GBP / NGN</span>
           <b>2,048.62</b>
-          <em>↗ 0.42%</em>
+          <em><ArrowIcon direction="up" className="mr-[3px] h-[9px] w-[9px] align-middle" />0.42%</em>
         </div>
         <div
           className={`flex items-center gap-[8px] pl-[18px] text-[10px] text-navy whitespace-nowrap
@@ -29,7 +31,7 @@ export function MarketStrip() {
         >
           <span>GBP / USD</span>
           <b>1.2748</b>
-          <em>↗ 0.18%</em>
+          <em><ArrowIcon direction="up" className="mr-[3px] h-[9px] w-[9px] align-middle" />0.18%</em>
         </div>
         <div
           className={`flex items-center gap-[8px] pl-[18px] text-[10px] text-navy whitespace-nowrap
@@ -38,7 +40,7 @@ export function MarketStrip() {
         >
           <span>EUR / NGN</span>
           <b>1,730.18</b>
-          <em className={`negative`}>↘ 0.12%</em>
+          <em className={`negative`}><ArrowIcon direction="down" className="mr-[3px] h-[9px] w-[9px] align-middle" />0.12%</em>
         </div>
       
       </div>

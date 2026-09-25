@@ -10,7 +10,7 @@ export function Footer() {
           max-[700px]:[&>_small]:w-[100%]`}
       >
         <div
-          className={`[&_.brand]:text-[16px] [&_.brand-mark]:h-[24px] [&_.brand-mark]:w-[24px] [&_.brand-mark]:rounded-[7px] [&_.brand-mark_svg]:w-[14px] [&_p]:text-[8px] [&_p]:text-[#8192aa] [&_p]:m-[7px_0_0]`}
+          className={`[&_.brand-logo]:h-[30px] [&_p]:text-[8px] [&_p]:text-[#8192aa] [&_p]:m-[7px_0_0]`}
         >
           <Brand />
           <p>Currency exchange, made clearer.</p>
@@ -18,11 +18,11 @@ export function Footer() {
         <nav aria-label="Footer navigation">
           <a href="#compare">Compare rates</a>
           <a href="#alerts">Rate alerts</a>
-          <a href="#about">About FX Swift</a>
+          <a href="#about">About PAS FX</a>
           <a href="#about">Privacy</a>
           <a href="#about">Terms</a>
         </nav>
-        <small>© 2026 FX Swift. Sample figures shown for preview.</small>
+        <small>© 2026 PAS FX. Sample figures shown for preview.</small>
       </div>
     </footer>
   );

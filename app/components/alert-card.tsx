@@ -1,4 +1,5 @@
 import { formatRange, number, currencies, type Alert } from "./data/fx-data";
+import { ArrowIcon } from "./ui/ArrowIcon";
 
 export function AlertCard({
   alert,
@@ -24,9 +25,9 @@ export function AlertCard({
           [&_strong_span]:text-[#a1acb9] [&_strong_span]:p-[0_2px]`}
       >
         <strong>
-          {currencies[alert.from].flag} {alert.from}
-          <span>→</span>
-          {currencies[alert.to].flag} {alert.to}
+          <img src={currencies[alert.from].icon} alt="" className="h-3.5 w-3.5 rounded-full object-cover" /> {alert.from}
+          <ArrowIcon className="h-2.5 w-2.5 text-[#a1acb9]" />
+          <img src={currencies[alert.to].icon} alt="" className="h-3.5 w-3.5 rounded-full object-cover" /> {alert.to}
         </strong>
         <button
           className={`w-[27px] h-[15px] p-[2px] border-0 rounded-[10px] bg-[#d2dbe6] flex justify-start [&_i]:w-[11px] [&_i]:h-[11px] [&_i]:bg-surface [&_i]:rounded-full [&_i]:shadow-[0_1px_2px_#1d2f4738] [&.on]:justify-end [&.on]:bg-[#31b37b] ${alert.enabled ? "on" : ""}`}

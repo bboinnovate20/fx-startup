@@ -18,13 +18,8 @@ export function SectionHeading({
         max-[700px]:[&_p]:text-[9px] max-[700px]:[&_p]:leading-[1.55] max-[700px]:[&_p]:max-w-[300px] max-[390px]:[&_h2]:text-[20px]`}
     >
       <div>
-        <span
-          className={`text-[9px] tracking-[1.35px] font-extrabold text-[#6f82a1]`}
-        >
-          {eyebrow}
-        </span>
-        <h2>{title}</h2>
-        {description && <p>{description}</p>}
+        <h2 className="text-3xl!">{title}</h2>
+        {description && <p className="text-lg!">{description}</p>}
       </div>
       {action}
     </div>

@@ -1,22 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Currency } from "./data/fx-data";
 import { getRate } from "./data/fx-data";
+import type { ProviderInfo } from "./data/providers";
 import { Header } from "./header";
 import { Hero } from "./hero";
 import { MarketStrip } from "./market-strip";
 import { ProviderComparison } from "./provider-comparison";
+import { ProviderDirectory } from "./provider-directory";
 import { TrendSection } from "./trend-section";
 import { AlertsSection } from "./alerts-section";
 import { Footer } from "./footer";
+import { ArrowIcon } from "./ui/ArrowIcon";
 
-export default function FxDashboard() {
-  const [from, setFrom] = useState<Currency>("GBP");
-  const [to, setTo] = useState<Currency>("NGN");
-  const [amount, setAmount] = useState("500");
+export default function FxDashboard({
+  initialValues,
+}: {
+  initialValues?: { amount?: string; from?: Currency; to?: Currency };
+}) {
+  const [from, setFrom] = useState<Currency>(initialValues?.from ?? "GBP");
+  const [to, setTo] = useState<Currency>(initialValues?.to ?? "NGN");
+  const [amount, setAmount] = useState(initialValues?.amount ?? "500");
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const rate = getRate(from, to);
-  const amountValue = Number(amount) || 0;
+
+  useEffect(() => {
+    let active = true;
+    fetch("/data/providers.json")
+      .then((response) => {
+        if (!response.ok) throw new Error("Could not load providers");
+        return response.json() as Promise<ProviderInfo[]>;
+      })
+      .then((data) => {
+        if (active && Array.isArray(data)) setProviders(data);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <>
       <div className={`overflow-hidden`} id="top">
@@ -27,6 +51,7 @@ export default function FxDashboard() {
           <Hero
             {...{ from, to, setFrom, setTo, amount, setAmount }}
             rate={rate}
+            providers={providers}
           />
           <div
             className={`max-w-[1145px] m-[auto] p-[55px_18px_67px] max-[700px]:p-[39px_15px_47px]`}
@@ -34,9 +59,12 @@ export default function FxDashboard() {
             <ProviderComparison
               from={from}
               to={to}
-              amount={amountValue}
+              amount={amount}
+              setAmount={setAmount}
               rate={rate}
+              providers={providers}
             />
+            <ProviderDirectory providers={providers} />
             <TrendSection from={from} to={to} rate={rate} />
             <AlertsSection {...{ from, to, setFrom, setTo }} />
             <section
@@ -51,7 +79,7 @@ export default function FxDashboard() {
                   text-white text-[20px] shadow-[0_6px_15px_color-mix(in_srgb,var(--blue)_19%,transparent)] max-[700px]:w-[33px] max-[700px]:h-[33px]`}
                 aria-hidden="true"
               >
-                ↗
+                <ArrowIcon className="h-4 w-4 text-white" />
               </span>
               <div>
                 <span
@@ -63,7 +91,7 @@ export default function FxDashboard() {
                 <p>Compare transparently and make more of every transfer.</p>
               </div>
               <a href="#converter">
-                Convert currency <span>→</span>
+                Convert currency <ArrowIcon className="h-3 w-3" />
               </a>
               <div
                 className={`absolute [right:130px] [top:-83px] w-[220px] h-[220px] border border-[#a8c2ef45] rounded-full shadow-[0_0_0_30px_#a8c2ef20,_0_0_0_62px_#a8c2ef12]

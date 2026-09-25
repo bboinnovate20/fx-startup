@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "./ui/Button";
 import { CurrencyPicker } from "./currency-picker";
 import type { Alert, Currency } from "./data/fx-data";
+import { ArrowIcon } from "./ui/ArrowIcon";
 
 export function AlertForm({
   from,
@@ -86,7 +87,7 @@ export function AlertForm({
             label="Alert source currency"
             onChange={setFrom}
           />
-          <span>→</span>
+          <ArrowIcon className="h-3 w-3 text-[#9aa5b4]" />
           <CurrencyPicker
             value={to}
             label="Alert target currency"
@@ -264,7 +265,7 @@ export function AlertForm({
           className={`h-9 w-full mt-3 rounded-lg text-[9px] [&_span]:ml-[auto] [&_span]:text-[15px]`}
         >
           {editing ? "Save alert changes" : "Create rate alert"}
-          <span>→</span>
+          <ArrowIcon className="h-3 w-3" />
         </Button>
         {editing && (
           <button

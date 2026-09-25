@@ -8,8 +8,22 @@ function TrendChart({
 }: {
   from: Currency;
   to: Currency;
-  rate: number;
+  rate: number | null;
 }) {
+  if (rate === null) {
+    return (
+      <section className="grid min-h-[230px] content-start gap-4 rounded-[11px] border border-[var(--line)] bg-surface p-[20px_21px_15px] max-[700px]:p-[17px]">
+        <div>
+          <span className="text-[9px] font-extrabold tracking-[1.35px] text-[#6f82a1]">RATE MOVEMENT</span>
+          <h2 className="m-[5px_0_0] text-[17px] text-navy">24-hour trend</h2>
+        </div>
+        <p className="m-0 self-center text-[13px] leading-5 text-[#718096]">
+          Trend data isn’t available for this currency pair yet.
+        </p>
+      </section>
+    );
+  }
+
   const chartDigits = rate < 10 ? 4 : 2;
   const chartLevels = [rate * 1.01, rate * 1.003, rate * 0.997, rate * 0.99];
   const path = trendPoints
@@ -121,7 +135,7 @@ export function TrendSection({
 }: {
   from: Currency;
   to: Currency;
-  rate: number;
+  rate: number | null;
 }) {
   return (
     <section

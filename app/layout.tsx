@@ -26,7 +26,7 @@ const boing = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "FX Swift | Compare currency exchange rates",
+  title: "PAS FX | Compare currency exchange rates",
   description:
     "Compare currency exchange rates, estimate transfers, and set alerts for your preferred rate.",
 };

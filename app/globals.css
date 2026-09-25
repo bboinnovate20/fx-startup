@@ -5,6 +5,7 @@
   --navy-deep: #0b2447;
   /* --blue: #155eef; */
   --blue: #623CEA;
+  --black: #000000;
   --blue-hover: #270E81;
   --ink: #0f172a;
   --muted: #64748b;
@@ -71,9 +72,12 @@
 
   button:focus-visible,
   a:focus-visible,
-  select:focus-visible,
-  input:focus-visible {
-    @apply outline-[3px_solid_color-mix(in_srgb,var(--blue)_33%,transparent)] outline-offset-2;
+  select:focus-visible {
+    @apply outline-[3px_solid_color-mix(in_srgb,var(--blue)_50%,transparent)] outline-offset-2;
+  }
+
+  input:not([type="radio"]):not([type="checkbox"]):focus {
+    @apply outline-none shadow-none border-2 border-navy;
   }
 
   h1,
@@ -88,23 +92,24 @@
 }
 
 .currency-floater {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid rgb(255 255 255 / 25%);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 12%);
-  color: white;
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.02em;
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--blue) 24%, white);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--blue) 8%, white);
+  color: var(--blue);
 }
 
-.currency-floater-flag {
-  font-size: 16px;
-  line-height: 1;
+.provider-floater-logo {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  border-radius: 50%;
+  background: white;
+  object-fit: contain;
 }
 
 @media (min-width: 1024px) {
@@ -116,7 +121,7 @@
 
   .currency-rail .currency-floater {
     position: absolute;
-    left: calc(50% - 42px);
+    left: calc(50% - 34px);
   }
 
   .currency-rail-left .currency-floater:nth-child(1) {
@@ -125,26 +130,26 @@
 
   .currency-rail-left .currency-floater:nth-child(2) {
     top: 32%;
-    left: calc(50% - 22px);
+    left: calc(50% - 10px);
   }
 
   .currency-rail-left .currency-floater:nth-child(3) {
     top: 56%;
-    left: calc(50% - 54px);
+    left: calc(50% - 46px);
   }
 
   .currency-rail-right .currency-floater:nth-child(1) {
     top: 12%;
-    left: calc(50% - 54px);
+    left: calc(50% - 46px);
   }
 
   .currency-rail-right .currency-floater:nth-child(2) {
     top: 36%;
-    left: calc(50% - 31px);
+    left: calc(50% - 18px);
   }
 
   .currency-rail-right .currency-floater:nth-child(3) {
     top: 60%;
-    left: calc(50% - 42px);
+    left: calc(50% - 48px);
   }
 }

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "pesa",
+    "name": "Pesa",
+    "logo": "/logos/pesa.png",
+    "url": "https://pesa.co"
+  },
+  {
+    "id": "nala",
+    "name": "Nala",
+    "logo": "/logos/nala.png",
+    "url": "https://nala.com"
+  },
+  {
+    "id": "sendapp",
+    "name": "Send",
+    "logo": "/logos/sendapp.png",
+    "url": "https://send.app"
+  },
+  {
+    "id": "taptapsend",
+    "name": "Taptap Send",
+    "logo": "/logos/taptapsend.png",
+    "url": "https://taptapsend.com"
+  },
+  {
+    "id": "remitly",
+    "name": "Remitly",
+    "logo": "/logos/remitly.png",
+    "url": "https://remitly.com"
+  },
+  {
+    "id": "wise",
+    "name": "Wise",
+    "logo": "/logos/wise.png",
+    "url": "https://wise.com"
+  },
+  {
+    "id": "monieworld",
+    "name": "MonieWorld",
+    "logo": "/logos/monieworld.svg",
+    "url": "https://moniepoint.com"
+  },
+  {
+    "id": "lemfi",
+    "name": "LemFi",
+    "logo": "/logos/lemfi.png",
+    "url": "https://lemfi.com"
+  },
+  {
+    "id": "sendwave",
+    "name": "Sendwave",
+    "logo": "/logos/sendwave.png",
+    "url": "https://sendwave.com"
+  },
+  {
+    "id": "grey",
+    "name": "Grey",
+    "logo": "/logos/grey.svg",
+    "url": "https://grey.co"
+  },
+  {
+    "id": "access",
+    "name": "Access Bank",
+    "logo": "/logos/access.ico",
+    "url": "https://accessbankplc.com"
+  }
+]

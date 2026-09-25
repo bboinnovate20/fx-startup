@@ -1,3 +1,5 @@
+import { ArrowIcon } from "./ui/ArrowIcon";
+
 export function InsightCard() {
   return (
     <aside
@@ -19,7 +21,7 @@ export function InsightCard() {
         full estimate before choosing a provider.
       </p>
       <a href="#compare">
-        Compare provider details <span>→</span>
+        Compare provider details <ArrowIcon className="h-3 w-3" />
       </a>
       <div
         className={`absolute [bottom:14px] [right:20px] w-[145px] h-[32px] opacity-[0.72] [&_svg]:w-[100%] [&_svg]:h-[100%]
