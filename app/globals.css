@@ -82,3 +82,69 @@
     @apply font-display font-semibold tracking-[-0.045em];
   }
 }
+
+.currency-rail {
+  display: none;
+}
+
+.currency-floater {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 12%);
+  color: white;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.currency-floater-flag {
+  font-size: 16px;
+  line-height: 1;
+}
+
+@media (min-width: 1024px) {
+  .currency-rail {
+    position: relative;
+    display: block;
+    min-height: 420px;
+  }
+
+  .currency-rail .currency-floater {
+    position: absolute;
+    left: calc(50% - 42px);
+  }
+
+  .currency-rail-left .currency-floater:nth-child(1) {
+    top: 8%;
+  }
+
+  .currency-rail-left .currency-floater:nth-child(2) {
+    top: 32%;
+    left: calc(50% - 22px);
+  }
+
+  .currency-rail-left .currency-floater:nth-child(3) {
+    top: 56%;
+    left: calc(50% - 54px);
+  }
+
+  .currency-rail-right .currency-floater:nth-child(1) {
+    top: 12%;
+    left: calc(50% - 54px);
+  }
+
+  .currency-rail-right .currency-floater:nth-child(2) {
+    top: 36%;
+    left: calc(50% - 31px);
+  }
+
+  .currency-rail-right .currency-floater:nth-child(3) {
+    top: 60%;
+    left: calc(50% - 42px);
+  }
+}

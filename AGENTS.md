@@ -10,5 +10,6 @@ This project details (PR, and details) is in `/docs`.
 
 If there are some information that has some option to be picked from, asked me instead of going ahead to work on it. Make sure, we agreed on some certain implementation that need some clarification. Know that you are communicating and building with Engineer. Ask proper questions before proceeding with some critical implementation
 
+Check brand colors and design system, don't just choose random color for things to work.
 
 <!-- END:nextjs-agent-rules -->

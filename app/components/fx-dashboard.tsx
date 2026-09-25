@@ -23,11 +23,11 @@ export default function FxDashboard() {
         <Header />
 
         <main>
+          <MarketStrip />
           <Hero
             {...{ from, to, setFrom, setTo, amount, setAmount }}
             rate={rate}
           />
-          <MarketStrip />
           <div
             className={`max-w-[1145px] m-[auto] p-[55px_18px_67px] max-[700px]:p-[39px_15px_47px]`}
           >
