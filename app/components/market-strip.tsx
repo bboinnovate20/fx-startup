@@ -13,10 +13,10 @@ export function MarketStrip() {
           className={`[&_i]:inline-block [&_i]:w-[6px] [&_i]:h-[6px] [&_i]:rounded-full [&_i]:bg-[var(--success)] [&_i]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--success)_11%,transparent)] text-[8px] text-navy
             font-extrabold tracking-[1px] whitespace-nowrap [&_i]:mr-[6px] max-[900px]:w-[100%] max-[700px]:text-[8px]`}
         >
-          <i /> SAMPLE MARKET SNAPSHOT
+          <i /> MARKET SNAPSHOT
         </span>
         <div
-          className={`flex items-center gap-[8px] pl-[18px] text-[10px] text-navy whitespace-nowrap
+          className={`flex items-center gap-[8px] pl-[18px] text-[12px] text-navy whitespace-nowrap
             [&_b]:text-[12px] [&_b]:text-navy [&_em]:not-italic [&_em]:text-[#169767] [&_em]:text-[9px] [&_.negative]:text-[#d65c64] max-[900px]:pl-[0]
             max-[700px]:gap-[5px] max-[700px]:text-[9px] max-[700px]:[&_b]:text-[11px] max-[390px]:flex-wrap max-[390px]:gap-[3px_5px]`}
         >
@@ -25,7 +25,7 @@ export function MarketStrip() {
           <em><ArrowIcon direction="up" className="mr-[3px] h-[9px] w-[9px] align-middle" />0.42%</em>
         </div>
         <div
-          className={`flex items-center gap-[8px] pl-[18px] text-[10px] text-navy whitespace-nowrap
+          className={`flex items-center gap-[8px] pl-[18px] text-[12px] text-navy whitespace-nowrap
             [&_b]:text-[12px] [&_b]:text-navy [&_em]:not-italic [&_em]:text-[#169767] [&_em]:text-[9px] [&_.negative]:text-[#d65c64] max-[900px]:pl-[0]
             max-[700px]:gap-[5px] max-[700px]:text-[9px] max-[700px]:[&_b]:text-[11px] max-[390px]:flex-wrap max-[390px]:gap-[3px_5px]`}
         >
@@ -34,7 +34,7 @@ export function MarketStrip() {
           <em><ArrowIcon direction="up" className="mr-[3px] h-[9px] w-[9px] align-middle" />0.18%</em>
         </div>
         <div
-          className={`flex items-center gap-[8px] pl-[18px] text-[10px] text-navy whitespace-nowrap
+          className={`flex items-center gap-[8px] pl-[18px] text-[12px] text-navy whitespace-nowrap
             [&_b]:text-[12px] [&_b]:text-navy [&_em]:not-italic [&_em]:text-[#169767] [&_em]:text-[9px] [&_.negative]:text-[#d65c64] max-[900px]:pl-[0]
             max-[700px]:gap-[5px] max-[700px]:text-[9px] max-[700px]:[&_b]:text-[11px] max-[390px]:flex-wrap max-[390px]:gap-[3px_5px]`}
         >

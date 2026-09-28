@@ -1,85 +1,22 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
-import type { Currency } from "./data/fx-data";
+import { money, providerSeed, type Currency } from "./data/fx-data";
 import type { ProviderInfo } from "./data/providers";
 import { Converter } from "./converter";
 
-const leftProviderIds = ["wise", "nala", "remitly"];
-const rightProviderIds = ["pesa", "sendwave", "lemfi"];
+const ease = [0.22, 1, 0.36, 1] as const;
+
 const heroPhrases = [
   "Catch the right moment.",
   "Get more from every exchange.",
   "Catch the right moment.",
 ];
 
-function ProviderFloaters({ side, providers }: { side: "left" | "right"; providers: ProviderInfo[] }) {
-  const ids = side === "left" ? leftProviderIds : rightProviderIds;
-  const items = ids
-    .map((id) => providers.find((provider) => provider.id === id))
-    .filter((provider): provider is ProviderInfo => Boolean(provider));
-
-  return (
-    <div className={`currency-rail currency-rail-${side}`} aria-hidden="true">
-      {items.map((provider, index) => (
-        <ProviderFloater
-          key={provider.id}
-          provider={provider}
-          pathIndex={index + (side === "right" ? 1 : 0)}
-          delay={index * 0.45 + (side === "right" ? 0.7 : 0)}
-        />
-      ))}
-    </div>
-  );
-}
-
-function ProviderFloater({
-  provider,
-  pathIndex,
-  delay,
-}: {
-  provider: ProviderInfo;
-  pathIndex: number;
-  delay: number;
-}) {
-  const prefersReducedMotion = useReducedMotion();
-  const direction = pathIndex % 2 ? -1 : 1;
-  const variation = Math.abs(pathIndex) % 3;
-  const path = Array.from({ length: 9 }, (_, step) => {
-    const angle = ((step * Math.PI) / 4) * direction;
-    return {
-      x: Math.sin(angle) * (16 + variation * 5),
-      y: step * (8 + variation),
-      rotate: step * 45 * direction,
-    };
-  });
-
-  return (
-    <motion.div
-      className="currency-floater"
-      animate={prefersReducedMotion ? undefined : {
-        x: path.map(({ x }) => x),
-        y: path.map(({ y }) => y),
-        rotate: path.map(({ rotate }) => rotate),
-        scale: [0.96, 1, 1.03, 1, 0.96],
-        opacity: [0, 1, 1, 0.5, 0],
-      }}
-      transition={{
-        duration: 6.5 + (Math.abs(pathIndex) % 3) * 0.7,
-        ease: "easeInOut",
-        repeat: Infinity,
-        delay,
-      }}
-    >
-      <img className="provider-floater-logo" src={provider.logo} alt="" />
-    </motion.div>
-  );
-}
-
 function MobileProviderTicker({ providers }: { providers: ProviderInfo[] }) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <div className="overflow-hidden lg:hidden" aria-hidden="true">
+    <div className="mb-8 overflow-hidden lg:hidden" aria-hidden="true">
       <motion.div
         className="flex w-max"
         animate={prefersReducedMotion ? undefined : { x: ["0%", "-50%"] }}
@@ -159,6 +96,78 @@ function AnimatedHeroPhrase() {
   );
 }
 
+function ProviderRateCards({
+  to,
+  amount,
+  rate,
+  providers,
+}: {
+  to: Currency;
+  amount: string;
+  rate: number | null;
+  providers: ProviderInfo[];
+}) {
+  const prefersReducedMotion = useReducedMotion();
+  if (!rate) return null;
+
+  const amountValue = Number(amount.replaceAll(",", "")) || 500;
+  const scale = rate / providerSeed[0].rate;
+  const top3 = providerSeed
+    .map((seed) => {
+      const info = providers.find((p) => p.id === seed.id);
+      return { ...seed, logo: info?.logo, payout: amountValue * seed.rate * scale };
+    })
+    .sort((a, b) => b.payout - a.payout)
+    .slice(0, 3);
+
+  return (
+    <div className="mt-7 space-y-2 text-left">
+      {top3.map((provider, i) => (
+        <motion.div
+          key={provider.id}
+          initial={prefersReducedMotion ? false : { opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.38, ease, delay: 0.3 + i * 0.1 }}
+          className={`flex items-center gap-3 rounded-[14px] px-3.5 py-2.5 ${
+            i === 0 ? "bg-primary" : "bg-[#f5f4fa]"
+          }`}
+        >
+          <div className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full border border-black/5 bg-white">
+            {provider.logo ? (
+              <img src={provider.logo} alt="" className="h-full w-full object-cover rounded-full" />
+            ) : (
+              <span className="text-[11px] font-bold text-primary">{provider.mark}</span>
+            )}
+          </div>
+          <span className={`flex-1 text-[13px] font-semibold ${i === 0 ? "text-white" : "text-[#25243a]"}`}>
+            {provider.name}
+            {i === 0 && (
+              <span className="ml-2 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-medium">
+                Best rate
+              </span>
+            )}
+          </span>
+          <span className={`shrink-0 text-[13px] font-bold ${i === 0 ? "text-white" : "text-[#1a192d]"}`}>
+            {money(provider.payout, to)}
+          </span>
+        </motion.div>
+      ))}
+      <motion.a
+        href="#compare"
+        initial={prefersReducedMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, ease, delay: 0.62 }}
+        className="flex items-center gap-1 pt-1 text-[12px] font-semibold text-primary transition-opacity hover:opacity-75"
+      >
+        Compare all providers
+        <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0">
+          <path d="m7 4 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </motion.a>
+    </div>
+  );
+}
+
 export function Hero({
   from,
   to,
@@ -178,28 +187,68 @@ export function Hero({
   rate: number | null;
   providers: ProviderInfo[];
 }) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <section
-      className="relative isolate overflow-hidden bg-white px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14"
+      className="relative isolate overflow-hidden bg-white px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14 lg:pb-20 lg:pt-16"
       id="rates"
     >
-      <div className="relative z-10 mx-auto max-w-240 text-center">
-        <div className="h-40">
-          <span className="text-[16px] uppercase font-semibold tracking-wider text-primary">
-            Smart currency exchange
-          </span>
-          <h1
-            className="mb-2 mt-4 min-h-[3.15em] text-[34px] font-semibold leading-[1.05] tracking-normal text-primary sm:text-[46px] lg:min-h-[2.1em]"
+      <div className="relative z-10 mx-auto max-w-[1080px]">
+        <div className="lg:grid lg:grid-cols-[1fr_460px] lg:items-center lg:gap-12 xl:grid-cols-[1fr_500px] xl:gap-16">
+          {/* Left column: headline + provider rate cards */}
+          <div className="mb-10 text-center lg:mb-0 lg:text-left">
+            <motion.span
+              className="block text-[16px] font-semibold uppercase tracking-wider text-primary"
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            >
+              Smart currency exchange
+            </motion.span>
+
+            <h1 className="mb-0 mt-4 text-[24px] font-semibold leading-[1.05] tracking-normal text-primary sm:text-[36px] lg:text-[48px] xl:text-[44px]">
+              <motion.span
+                className="block"
+                aria-hidden="true"
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut", delay: 0.08 }}
+              >
+                Know best the rate.
+              </motion.span>
+              <AnimatedHeroPhrase />
+            </h1>
+
+            <motion.p
+              className="mx-auto mt-4 max-w-[400px] text-[14px] leading-[1.65] text-[#55536e] lg:mx-0"
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: "easeOut", delay: 0.16 }}
+            >
+              Live exchange rates from multiple providers — see exactly who gives your recipient the most.
+            </motion.p>
+
+            <div className="hidden lg:block">
+              <ProviderRateCards to={to} amount={amount} rate={rate} providers={providers} />
+            </div>
+          </div>
+
+          {/* Right column: converter */}
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease, delay: 0.12 }}
           >
-            <span aria-hidden="true">Know best the rate.</span>
-            <AnimatedHeroPhrase />
-          </h1>
+            <Converter {...{ from, to, setFrom, setTo, amount, setAmount, rate }} />
+          </motion.div>
         </div>
-        <div className="mx-auto grid max-w-[960px] grid-cols-1 items-center gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)_minmax(0,1fr)] lg:gap-5">
-          <MobileProviderTicker providers={providers} />
-          <ProviderFloaters side="left" providers={providers} />
-          <Converter {...{ from, to, setFrom, setTo, amount, setAmount, rate }} />
-          <ProviderFloaters side="right" providers={providers} />
+
+        <div className="lg:hidden">
+          <div className="mt-6">
+            <MobileProviderTicker providers={providers} />
+          </div>
+          <ProviderRateCards to={to} amount={amount} rate={rate} providers={providers} />
         </div>
       </div>
     </section>

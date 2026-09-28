@@ -9,27 +9,19 @@ export function AlertForm({
   to,
   setFrom,
   setTo,
-  onSave,
-  onCancel,
-  editing,
+  compact = false,
 }: {
   from: Currency;
   to: Currency;
   setFrom: (value: Currency) => void;
   setTo: (value: Currency) => void;
-  onSave: (alert: Omit<Alert, "id" | "enabled">, id?: number) => void;
-  onCancel: () => void;
-  editing: Alert | null;
+  compact?: boolean;
 }) {
-  const [target, setTarget] = useState(String(editing?.target ?? 2050));
-  const [low, setLow] = useState(String(editing?.low ?? 2000));
-  const [high, setHigh] = useState(String(editing?.high ?? 2050));
-  const [mode, setMode] = useState<"range" | "threshold">(
-    editing?.mode ?? "range",
-  );
-  const [channel, setChannel] = useState<Alert["channel"]>(
-    editing?.channel ?? "Telegram",
-  );
+  const [target, setTarget] = useState("2050");
+  const [low, setLow] = useState("2000");
+  const [high, setHigh] = useState("2050");
+  const [mode, setMode] = useState<"range" | "threshold">("range");
+  const [channel, setChannel] = useState<Alert["channel"]>("Telegram");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -40,111 +32,84 @@ export function AlertForm({
       return;
     }
     setError("");
-    onSave(
-      {
-        from,
-        to,
-        target: Number(target),
-        low: Number(low),
-        high: Number(high),
-        mode,
-        channel,
-      },
-      editing?.id,
-    );
     setNotice(
-      `${editing ? "Alert updated" : "Alert saved"}. Connect ${channel} to enable delivery.`,
+      `Alert created. Connect ${channel} to enable delivery.`,
     );
   }
   return (
     <div
-      className={`border border-[var(--line)] rounded-[11px] bg-surface p-[19px_20px] max-[900px]:p-[15px] max-[700px]:p-[16px]`}
+      className={compact ? "rounded-[16px] border border-[#e4e1ef] bg-surface p-4 font-display" : "border border-[var(--line)] rounded-[14px] bg-surface p-6 font-display max-[900px]:p-5 max-[700px]:p-[18px]"}
     >
       <div
-        className={`flex items-center gap-[10px] mb-[15px] [&_h3]:text-[13px] [&_h3]:text-navy [&_h3]:m-[0] [&_h3]:tracking-[-0.02em]
-          [&_small]:block [&_small]:text-[8px] [&_small]:text-[#8996a7] [&_small]:mt-[4px]`}
+        className={`flex items-center gap-3 ${compact ? "mb-3" : "mb-5"} [&_h3]:text-[18px] [&_h3]:text-navy [&_h3]:m-[0] [&_h3]:tracking-[-0.02em]
+          [&_small]:block [&_small]:text-[12px] [&_small]:text-[#64748b] [&_small]:mt-1`}
       >
-        <span
-          className={`grid place-items-center w-[31px] h-[31px] rounded-[8px] text-primary bg-[#edf3ff] text-[18px]`}
-        >
-          {editing ? "✎" : "＋"}
-        </span>
         <span>
-          <h3>{editing ? "Edit rate alert" : "Create a rate alert"}</h3>
+          <h3 className={compact ? "text-[18px]!" : "text-2xl!"}>Create alert</h3>
           <small>Choose the rate you want to watch.</small>
         </span>
       </div>
       <form onSubmit={submit}>
-        <label className={`block text-[#68778d] text-[8px] font-[650]`}>
+        <label className={`block text-[#64748b] text-[12px] font-semibold`}>
           Currency pair
         </label>
         <div
-          className={`flex items-center gap-[9px] mt-[6px] [&_.currency-picker]:border border-[#e1e7ef] [&_.currency-picker]:bg-white [&_.currency-picker]:h-[35px] [&_.currency-picker]:flex-[1]
-            [&_.currency-picker]:justify-center [&>_span]:text-[#9aa5b4] [&>_span]:text-[11px]`}
+          className={`mt-2 flex w-full min-w-0 items-center gap-1 sm:gap-[10px] [&_.currency-picker]:min-w-0 [&_.currency-picker]:flex-1 [&_.currency-picker]:border-0 [&_.currency-picker]:bg-white [&_.currency-picker]:h-14 [&_.currency-picker]:max-w-full
+            [&_.currency-picker>button]:min-w-0 [&_.currency-picker>button]:gap-1.5 [&_.currency-picker>button]:px-1.5 sm:[&_.currency-picker>button]:px-2 [&_.currency-picker>button]:text-[14px] [&_.currency-picker>button>span]:min-w-0 [&_.currency-picker>button>span]:overflow-hidden [&_.currency-picker>button>span>span]:max-w-full [&_.currency-picker>button>img]:h-6 [&_.currency-picker>button>img]:w-6 sm:[&_.currency-picker>button>img]:h-8 sm:[&_.currency-picker>button>img]:w-8 [&>_span]:text-[#9aa5b4] [&>_span]:text-[11px]`}
         >
           <CurrencyPicker
             value={from}
             label="Alert source currency"
             onChange={setFrom}
+            variant="pair"
           />
-          <ArrowIcon className="h-3 w-3 text-[#9aa5b4]" />
+          <ArrowIcon className="h-3 w-3 shrink-0 text-[#9aa5b4]" />
           <CurrencyPicker
             value={to}
             label="Alert target currency"
             onChange={setTo}
+            variant="pair"
           />
         </div>
         <fieldset
           className={`border-0 m-[12px_0_0] p-[0] [&_legend]:p-[0] [&_legend]:mb-[6px] grid grid-cols-[1fr_1fr] gap-[7px]
             [&_legend]:col-[1/-1]`}
         >
-          <legend className={`block text-[#68778d] text-[8px] font-[650]`}>
+          <legend className={`block text-[#171a18] text-[12px] font-semibold`}>
             Trigger when the rate
           </legend>
-          <label
-            className={`relative flex items-center gap-[8px] border border-[#e5eaf0] rounded-[6px] p-[8px_7px] cursor-pointer [&.selected]:border-[#a8c1f4] [&.selected]:bg-[#f8faff] [&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none [&_b]:block [&_small]:block [&_b]:text-[8px] [&_b]:text-[#34445b] [&_small]:text-[7px] [&_small]:text-[#919cab] [&_small]:mt-[3px] max-[900px]:p-[7px_5px] max-[900px]:gap-[5px] max-[900px]:[&_small]:text-[6px] max-[700px]:p-[8px_7px] max-[700px]:[&_small]:text-[7px] ${mode === "range" ? "selected" : ""}`}
+          <button
+            type="button"
+            aria-pressed={mode === "range"}
+            onClick={() => setMode("range")}
+            className={`relative flex w-full items-center gap-[10px] rounded-[9px] border bg-white p-3 text-left cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out max-[900px]:p-[10px] max-[900px]:gap-2 max-[700px]:p-3 ${mode === "range" ? "border-primary bg-[#f7f8ff] shadow-[0_0_0_2px_color-mix(in_srgb,var(--blue)_10%,transparent)]" : "border-[#e5eaf0]"}`}
           >
-            <input
-              type="radio"
-              name="trigger-mode"
-              checked={mode === "range"}
-              onChange={() => setMode("range")}
-            />
-            <span
-              className={`w-[12px] h-[12px] border border-[#bac4d1] rounded-full flex-[0_0_auto]`}
-            />
             <span>
-              <b>Enters a range</b>
-              <small>Notify me within a rate range</small>
+              <p className="m-0 text-[12px] font-medium text-[#171a18]">Enters a range</p>
+              <small className="mt-1 block text-[10px] text-[#64748b]">Notify me within a rate range</small>
             </span>
-          </label>
-          <label
-            className={`relative flex items-center gap-[8px] border border-[#e5eaf0] rounded-[6px] p-[8px_7px] cursor-pointer [&.selected]:border-[#a8c1f4] [&.selected]:bg-[#f8faff] [&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none [&_b]:block [&_small]:block [&_b]:text-[8px] [&_b]:text-[#34445b] [&_small]:text-[7px] [&_small]:text-[#919cab] [&_small]:mt-[3px] max-[900px]:p-[7px_5px] max-[900px]:gap-[5px] max-[900px]:[&_small]:text-[6px] max-[700px]:p-[8px_7px] max-[700px]:[&_small]:text-[7px] ${mode === "threshold" ? "selected" : ""}`}
+          </button>
+          <button
+            type="button"
+            aria-pressed={mode === "threshold"}
+            onClick={() => setMode("threshold")}
+            className={`relative flex w-full items-center gap-[10px] rounded-[9px] border bg-white p-3 text-left cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out max-[900px]:p-[10px] max-[900px]:gap-2 max-[700px]:p-3 ${mode === "threshold" ? "border-primary bg-[#f7f8ff] shadow-[0_0_0_2px_color-mix(in_srgb,var(--blue)_10%,transparent)]" : "border-[#e5eaf0]"}`}
           >
-            <input
-              type="radio"
-              name="trigger-mode"
-              checked={mode === "threshold"}
-              onChange={() => setMode("threshold")}
-            />
-            <span
-              className={`w-[12px] h-[12px] border border-[#bac4d1] rounded-full flex-[0_0_auto]`}
-            />
             <span>
-              <b>Reaches a threshold</b>
-              <small>Notify me at or above a rate</small>
+              <p className="m-0 text-[12px] font-medium text-[#171a18]">Reaches a threshold</p>
+              <small className="mt-1 block text-[10px] text-[#64748b]">Notify me at or above a rate</small>
             </span>
-          </label>
+          </button>
         </fieldset>
         <div
           className={`grid grid-cols-[1fr_1.2fr] gap-[8px] mt-[12px] [&.single]:grid-cols-[1fr] ${mode === "threshold" ? "single" : ""}`}
         >
-          <label className={`block text-[#68778d] text-[8px] font-[650]`}>
+          <label className={`block text-[#171a18] text-[12px] font-semibold`}>
             Target rate
             <div
-              className={`flex items-center gap-[5px] h-[33px] p-[0_7px] border border-[#e0e6ee] rounded-[6px] mt-[5px]
-                [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#293b55] [&_input]:text-[9px]
-                [&_input]:p-[0] [&_span]:text-[7px] [&_span]:text-[#8794a6] [&_span]:whitespace-nowrap`}
+              className={`flex items-center gap-2 h-11 p-[0_10px] border border-[#d7dee8] rounded-[8px] mt-2
+                [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
+                [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
             >
               <input
                 required
@@ -154,19 +119,16 @@ export function AlertForm({
                 value={target}
                 onChange={(event) => setTarget(event.target.value)}
               />
-              <span>
-                {to} / {from}
-              </span>
             </div>
           </label>
           {mode === "range" && (
             <div className={`grid grid-cols-[1fr_1fr] gap-[6px]`}>
-              <label className={`block text-[#68778d] text-[8px] font-[650]`}>
+              <label className={`block text-[#171a18] text-[12px] font-semibold`}>
                 Range from
                 <div
-                  className={`flex items-center gap-[5px] h-[33px] p-[0_7px] border border-[#e0e6ee] rounded-[6px] mt-[5px]
-                    [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#293b55] [&_input]:text-[9px]
-                    [&_input]:p-[0] [&_span]:text-[7px] [&_span]:text-[#8794a6] [&_span]:whitespace-nowrap`}
+                  className={`flex items-center gap-2 h-11 p-[0_10px] border border-[#d7dee8] rounded-[8px] mt-2
+                    [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
+                    [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
                 >
                   <input
                     required
@@ -176,15 +138,14 @@ export function AlertForm({
                     value={low}
                     onChange={(event) => setLow(event.target.value)}
                   />
-                  <span>{to}</span>
                 </div>
               </label>
-              <label className={`block text-[#68778d] text-[8px] font-[650]`}>
+              <label className={`block text-[#171a18] text-[12px] font-semibold`}>
                 Range to
                 <div
-                  className={`flex items-center gap-[5px] h-[33px] p-[0_7px] border border-[#e0e6ee] rounded-[6px] mt-[5px]
-                    [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#293b55] [&_input]:text-[9px]
-                    [&_input]:p-[0] [&_span]:text-[7px] [&_span]:text-[#8794a6] [&_span]:whitespace-nowrap`}
+                  className={`flex items-center gap-2 h-11 p-[0_10px] border border-[#d7dee8] rounded-[8px] mt-2
+                    [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
+                    [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
                 >
                   <input
                     required
@@ -194,7 +155,6 @@ export function AlertForm({
                     value={high}
                     onChange={(event) => setHigh(event.target.value)}
                   />
-                  <span>{to}</span>
                 </div>
               </label>
             </div>
@@ -203,19 +163,17 @@ export function AlertForm({
         <fieldset
           className={`border-0 m-[12px_0_0] p-[0] [&_legend]:p-[0] [&_legend]:mb-[6px] mt-[12px]`}
         >
-          <legend className={`block text-[#68778d] text-[8px] font-[650]`}>
+          <legend className={`block text-[#171a18] text-[12px] font-semibold`}>
             Notification channel
           </legend>
           <div className={`flex gap-[7px]`}>
             <label
               className={
                 channel === "Telegram"
-                  ? `[&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none relative inline-flex items-center gap-[6px] h-[29px]
-                  border border-[#e2e8ef] rounded-[5px] p-[0_9px] text-[#6b7a8e] text-[8px] cursor-pointer [&.selected]:border-[#a9c2f2] [&.selected]:bg-[#f7faff]
-                  [&.selected]:text-[#315b9f] [&_.fake-radio]:[border:4px_solid_var(--blue)]`
-                  : `[&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none relative inline-flex items-center gap-[6px] h-[29px]
-                  border border-[#e2e8ef] rounded-[5px] p-[0_9px] text-[#6b7a8e] text-[8px] cursor-pointer [&.selected]:border-[#a9c2f2] [&.selected]:bg-[#f7faff]
-                  [&.selected]:text-[#315b9f]`
+                  ? `[&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none relative inline-flex items-center gap-2 h-10
+                  border border-primary rounded-lg bg-[#f7f8ff] p-[0_12px] text-primary text-[12px] font-medium cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out shadow-[0_0_0_2px_color-mix(in_srgb,var(--blue)_10%,transparent)]`
+                  : `[&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none relative inline-flex items-center gap-2 h-10
+                  border border-[#d7dee8] rounded-lg p-[0_12px] text-[#171a18] text-[12px] font-medium cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out`
               }
             >
               <input
@@ -224,22 +182,16 @@ export function AlertForm({
                 checked={channel === "Telegram"}
                 onChange={() => setChannel("Telegram")}
               />
-              <span
-                className={`text-[12px] [&.telegram]:text-[#2586c4] [&.whatsapp]:text-[#20a36b] telegram`}
-              >
-                ➤
-              </span>
+              <img src="/icons/telegram.svg" alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
               Telegram
             </label>
             <label
               className={
                 channel === "WhatsApp"
-                  ? `[&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none relative inline-flex items-center gap-[6px] h-[29px]
-                  border border-[#e2e8ef] rounded-[5px] p-[0_9px] text-[#6b7a8e] text-[8px] cursor-pointer [&.selected]:border-[#a9c2f2] [&.selected]:bg-[#f7faff]
-                  [&.selected]:text-[#315b9f] [&_.fake-radio]:[border:4px_solid_var(--blue)]`
-                  : `[&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none relative inline-flex items-center gap-[6px] h-[29px]
-                  border border-[#e2e8ef] rounded-[5px] p-[0_9px] text-[#6b7a8e] text-[8px] cursor-pointer [&.selected]:border-[#a9c2f2] [&.selected]:bg-[#f7faff]
-                  [&.selected]:text-[#315b9f]`
+                  ? `[&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none relative inline-flex items-center gap-2 h-10
+                  border border-primary rounded-lg bg-[#f7f8ff] p-[0_12px] text-primary text-[12px] font-medium cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out shadow-[0_0_0_2px_color-mix(in_srgb,var(--blue)_10%,transparent)]`
+                  : `[&_input]:absolute [&_input]:opacity-[0] [&_input]:pointer-events-none relative inline-flex items-center gap-2 h-10
+                  border border-[#d7dee8] rounded-lg p-[0_12px] text-[#171a18] text-[12px] font-medium cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out`
               }
             >
               <input
@@ -248,37 +200,24 @@ export function AlertForm({
                 checked={channel === "WhatsApp"}
                 onChange={() => setChannel("WhatsApp")}
               />
-              <span
-                className={`text-[12px] [&.telegram]:text-[#2586c4] [&.whatsapp]:text-[#20a36b] whatsapp`}
-              >
-                ◔
-              </span>
+              <img src="/icons/whatsapp.svg" alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
               WhatsApp
             </label>
           </div>
-          <small className={`block text-[#9aa5b1] text-[7px] mt-[6px]`}>
+          <small className={`block text-[#64748b] text-[10px] mt-2`}>
             You’ll need to connect and authorize your channel before delivery.
           </small>
         </fieldset>
         <Button
           type="submit"
-          className={`h-9 w-full mt-3 rounded-lg text-[9px] [&_span]:ml-[auto] [&_span]:text-[15px]`}
+          className={`mt-4 w-full rounded-full text-[14px] [&_span]:ml-[auto] [&_span]:text-[16px] px-5 font-medium! ${compact ? "h-11" : "h-12 py-7"}`}
         >
-          {editing ? "Save alert changes" : "Create rate alert"}
-          <ArrowIcon className="h-3 w-3" />
+          Create alert
+          <ArrowIcon className="h-4 w-4" />
         </Button>
-        {editing && (
-          <button
-            type="button"
-            className={`block w-[100%] border-0 bg-transparent text-[#6c7d94] text-[8px] mt-[7px] [&:hover]:text-primary`}
-            onClick={onCancel}
-          >
-            Cancel editing
-          </button>
-        )}
         {error && (
           <p
-            className={`m-[8px_0_0] p-[7px_8px] rounded-[5px] bg-[#fff0f0] text-[#b42332] text-[8px] leading-[1.5]`}
+            className={`m-[10px_0_0] p-[10px_12px] rounded-[7px] bg-[#fff0f0] text-[#b42332] text-[12px] leading-[1.5]`}
             role="alert"
           >
             {error}
@@ -286,14 +225,15 @@ export function AlertForm({
         )}
         {notice && (
           <p
-            className={`m-[8px_0_0] p-[7px_8px] rounded-[5px] bg-[#edf8f2] text-[#467660] text-[8px] leading-[1.5]`}
+            className={`m-[10px_0_0] p-[10px_12px] rounded-[7px] bg-[#edf8f2] text-[#467660] text-[12px] leading-[1.5]`}
             role="status"
           >
             {notice}
           </p>
         )}
-        <p className={`text-center m-[8px_0_0] text-[#98a3af] text-[7px]`}>
-          ⌑ Your contact details stay private and secure.
+        <p className={`mt-[10px] mb-0 flex items-center justify-center gap-1.5 text-center text-[#64748b] text-[10px]`}>
+          <img src="/icons/lock.svg" alt="" aria-hidden="true" className="h-3 w-[10px] shrink-0 object-contain" />
+          Your contact details stay private and secure.
         </p>
       </form>
     </div>

@@ -11,7 +11,7 @@ export function CurrencyPicker({
   value: Currency;
   onChange: (value: Currency) => void;
   label: string;
-  variant?: "default" | "hero";
+  variant?: "default" | "hero" | "pair";
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -64,17 +64,15 @@ export function CurrencyPicker({
   }
 
   const hero = variant === "hero";
+  const pair = variant === "pair";
 
   return (
     <div
-      className={`currency-picker relative inline-flex min-w-0 flex-[0_0_auto] rounded-[6px] ${hero ? "text-[#172b4d]" : "bg-[#f4f6f9] text-[#263851]"}`}
+      className={`currency-picker bg-gray-100 rounded-full font-display `}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
           setOpen(false);
-          setQuery("");
-        }
-      }}
-    >
+          setQuery(""); }}}>
       <button
         ref={triggerRef}
         type="button"
@@ -87,16 +85,25 @@ export function CurrencyPicker({
           setActiveIndex(currencyList.indexOf(value));
           setOpen((isOpen) => !isOpen);
         }}
-        className={`flex h-full w-full items-center justify-center gap-2 rounded-[inherit] border-0 bg-transparent text-inherit focus-visible:outline-[3px] focus-visible:outline-primary focus-visible:outline-offset-2 ${hero ? "min-h-[42px] px-2 text-[17px] font-semibold" : "min-h-[33px] px-2 text-[11px] font-bold"}`}
+        className={`flex h-full w-full items-center justify-center gap-2 rounded-[inherit] border-0 bg-gray-200 text-inherit focus-visible:outline-[3px] focus-visible:outline-primary focus-visible:outline-offset-2 ${hero ? "min-h-[42px] px-2 text-[17px] font-semibold" : pair ? "min-h-14 gap-2.5 px-3 text-[16px] font-bold" : "min-h-[33px] px-2 text-[11px] font-semibold"}`}
       >
         <img
           src={selected.icon}
           alt=""
           aria-hidden="true"
-          className={`shrink-0 rounded-full object-cover shadow-[0_0_0_1px_rgba(16,35,61,0.16)] ${hero ? "h-[23px] w-[23px]" : "h-[19px] w-[19px]"}`}
+          className={`shrink-0 rounded-full object-cover shadow-[0_0_0_1px_rgba(16,35,61,0.16)] ${pair ? "h-8 w-8" : hero ? "h-[23px] w-[23px]" : "h-[19px] w-[19px]"}`}
         />
-        <span>{value}</span>
-        <svg aria-hidden="true" viewBox="0 0 16 16" className={`shrink-0 text-[#718096] ${hero ? "ml-0.5 h-4 w-4" : "h-3 w-3"}`}>
+        {pair ? (
+          <span className="min-w-0 text-left leading-tight">
+            <span className="block text-[16px] font-bold">{value}</span>
+            <span className="block max-w-full truncate text-[11px] font-medium text-[#64748b]">
+              {selected.name}
+            </span>
+          </span>
+        ) : (
+          <span>{value}</span>
+        )}
+        <svg aria-hidden="true" viewBox="0 0 16 16" className={`shrink-0 text-[#718096] ${hero || pair ? "ml-0.5 h-4 w-4" : "h-3 w-3"}`}>
           <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
         </svg>
       </button>

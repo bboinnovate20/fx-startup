@@ -30,12 +30,6 @@
     "url": "https://remitly.com"
   },
   {
-    "id": "wise",
-    "name": "Wise",
-    "logo": "/logos/wise.png",
-    "url": "https://wise.com"
-  },
-  {
     "id": "monieworld",
     "name": "MonieWorld",
     "logo": "/logos/monieworld.svg",

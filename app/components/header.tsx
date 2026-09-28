@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Brand } from "./ui/Brand";
 import { Button } from "./ui/Button";
@@ -10,7 +12,13 @@ const links = [
   ["About", "#about"],
 ] as const;
 
-export function Header() {
+export function Header({
+  askHref = "#fx-ask-question",
+  startTarget = "converter",
+}: {
+  askHref?: string;
+  startTarget?: string;
+} = {}) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -38,15 +46,21 @@ export function Header() {
           <a className="text-[14px] font-semibold text-white/80 hover:text-white max-[900px]:hidden" href="#alerts">
             Log in
           </a>
+          <a
+            href={askHref}
+            className="rounded-full border border-white/35 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white max-[700px]:px-2 max-[700px]:py-1.5 max-[700px]:text-[11px]"
+          >
+            Ask AI
+          </a>
           <Button
             className="rounded-full px-4.5 py-2.5 max-[700px]:px-3 max-[700px]:py-2 [&_span]:text-[15px] max-[700px]:[&_span]:text-[13px]"
             onClick={() => {
               close();
-              document.getElementById("converter")?.scrollIntoView({ behavior: "smooth" });
+              document.getElementById(startTarget)?.scrollIntoView({ behavior: "smooth" });
             }}
           >
             Get started
-            <img src="/icons/plane-send.svg" alt="" className="h-4 w-4 brightness-0 invert" />
+            <img src="/icons/chevron-right.svg" alt="" className="h-4 w-4 brightness-0 invert" />
           </Button>
           <button
             type="button"

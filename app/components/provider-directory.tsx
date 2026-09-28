@@ -54,15 +54,15 @@ export function ProviderDirectory({ providers }: { providers: ProviderInfo[] }) 
                 href={provider.url}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="flex min-w-0 items-center gap-3 rounded-[14px] border border-white/20 bg-white/10 p-3 transition-colors hover:bg-white/20 sm:p-4"
+                className="flex min-w-0 items-center gap-3 rounded-[14px] border border-white/20 bg-white p-3 transition-colors hover:bg-white/20 sm:p-4"
               >
                 <motion.span
                   variants={logoVariants}
-                  className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-white p-1.5 sm:h-12 sm:w-12"
+                  className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full sm:h-12 sm:w-12"
                 >
-                  <img className="h-full w-full object-contain" src={provider.logo} alt="" loading="lazy" />
+                  <img className="h-full w-full object-cover" src={provider.logo} alt="" loading="lazy" />
                 </motion.span>
-                <span className="truncate text-sm font-semibold text-white sm:text-base">{provider.name}</span>
+                <span className="truncate text-sm font-semibold text-black sm:text-base">{provider.name}</span>
               </a>
             </motion.li>
           ))}
