@@ -9,7 +9,7 @@ const links = [
   ["Exchange rates", "#rates"],
   ["Compare", "#compare"],
   ["Rate alerts", "#alerts"],
-  ["About", "#about"],
+  // ["About", "#about"],
 ] as const;
 
 export function Header({
@@ -64,15 +64,17 @@ export function Header({
           </Button>
           <button
             type="button"
-            className="hidden h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] rounded-lg border border-white/25 bg-white/10 text-white transition hover:bg-white/20 max-[700px]:flex"
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white transition max-[700px]:flex"
             aria-label={open ? "Close navigation" : "Open navigation"}
             aria-expanded={open}
             aria-controls="primary-navigation"
             onClick={() => setOpen((value) => !value)}
           >
-            <span className={`h-0.5 w-5 bg-current transition-transform ${open ? "translate-y-[7px] rotate-45" : ""}`} />
-            <span className={`h-0.5 w-5 bg-current transition-opacity ${open ? "opacity-0" : ""}`} />
-            <span className={`h-0.5 w-5 bg-current transition-transform ${open ? "-translate-y-[7px] -rotate-45" : ""}`} />
+            <img
+              src="/icons/menu.svg"
+              alt=""
+              className={`h-5 w-5 object-contain brightness-0 invert transition-transform ${open ? "rotate-90" : ""}`}
+            />
           </button>
         </div>
       </div>

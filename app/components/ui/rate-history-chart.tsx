@@ -83,8 +83,8 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
   } satisfies ChartConfig;
 
   return (
-    <Card className={`mx-auto w-full max-w-[1020px] gap-0 overflow-hidden ${compact ? "rounded-[16px] font-display" : "rounded-[12px]"} border border-[var(--line)] bg-white p-0 text-[#171a18] shadow-none`}>
-      <CardHeader className={`flex flex-wrap items-center justify-between ${compact ? "gap-3 px-4 pb-0 pt-4" : "gap-4 px-7 pb-0 pt-6 max-[700px]:px-[18px] max-[700px]:pt-5"}`}>
+    <Card className={`mx-auto w-full max-w-[1020px] gap-0 overflow-hidden ${compact ? "rounded-[16px] font-display" : "rounded-[12px] px-2"} border border-[var(--line)] bg-white p-0 text-[#171a18] shadow-none`}>
+      <CardHeader className={`flex flex-wrap items-center justify-between ${compact ? "gap-3 px-4 pb-0 pt-4" : "gap-4 px-7 pb-0 pt-6 max-[700px]:px-1 max-[700px]:pt-5"}`}>
         <div className="min-w-0">
           <CardTitle className={`m-0 leading-tight tracking-[-0.04em] ${compact ? "text-[18px]" : "text-[26px] max-[700px]:text-[23px]"}`}>Rate history</CardTitle>
           <CardDescription className="mb-0 mt-1 text-[12px] text-[#64748b]">{from} to {to}</CardDescription>
@@ -112,7 +112,7 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
           ))}
         </div>
       </CardHeader>
-      <CardContent className={compact ? "px-2 pb-0 pt-3" : "px-5 pb-0 pt-5 max-[700px]:px-3"}>
+      <CardContent className={compact ? "px-2 pb-0 pt-3" : "px-5 pb-0 pt-5 max-[700px]:px-1"}>
         <ChartContainer
           config={chartConfig}
           className={compact ? "h-[210px] w-full min-w-0" : "h-[300px] w-full min-w-0 sm:h-[370px]"}
@@ -159,7 +159,7 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
           </LineChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className={`flex flex-wrap items-center justify-between gap-2 border-t border-[#e5e7e4] text-[11px] text-[#667064] ${compact ? "mt-2 px-4 py-3" : "mt-3 px-7 pb-5 pt-4 max-[700px]:px-[18px]"}`}>
+      <CardFooter className={`flex flex-wrap items-center justify-between gap-2 border-t border-[#e5e7e4] text-[11px] text-[#667064] ${compact ? "mt-2 px-4 py-3" : "mt-3 px-7 pb-5 pt-4 max-[700px]:px-1"}`}>
         <span className="font-medium text-primary">1 {from} = {number(rate, digits)} {to}</span>
         <span>Illustrative history · {selectedPeriod.label}</span>
       </CardFooter>

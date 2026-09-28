@@ -47,7 +47,7 @@ export default function FxDashboard({
         <Header />
 
         <main>
-          <MarketStrip />
+          {/* <MarketStrip /> */}
           <Hero
             {...{ from, to, setFrom, setTo, amount, setAmount }}
             rate={rate}
@@ -56,18 +56,27 @@ export default function FxDashboard({
           <div
             className={`max-w-[1000px] m-[auto] p-[55px_18px_67px] max-[700px]:p-[39px_15px_47px]`}
           >
-            <ProviderComparison
-              from={from}
-              to={to}
-              amount={amount}
-              setAmount={setAmount}
-              rate={rate}
-              providers={providers}
-            />
-            <ProviderDirectory providers={providers} />
-            <TrendSection from={from} to={to} setFrom={setFrom} setTo={setTo} rate={rate} />
-            <AlertsSection {...{ from, to, setFrom, setTo }} />
-
+            {/* Each section gets its own 24px side gutter, plus 24px of extra
+                top padding between sections (margins alone would collapse). */}
+            <div className="px-6 max-[700px]:px-0">
+              <ProviderComparison
+                from={from}
+                to={to}
+                amount={amount}
+                setAmount={setAmount}
+                rate={rate}
+                providers={providers}
+              />
+            </div>
+            <div className="px-6 pt-6 max-[700px]:pt-10">
+              <ProviderDirectory providers={providers} />
+            </div>
+            <div className="px-6 pt-6 max-[700px]:px-0 max-[700px]:pt-10">
+              <TrendSection from={from} to={to} setFrom={setFrom} setTo={setTo} rate={rate} />
+            </div>
+            <div className="px-6 pt-6 max-[700px]:px-0 max-[700px]:pt-10">
+              <AlertsSection {...{ from, to, setFrom, setTo }} />
+            </div>
           </div>
         </main>
         <Footer />

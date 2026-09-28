@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { money, providerSeed, type Currency } from "./data/fx-data";
 import type { ProviderInfo } from "./data/providers";
 import { Converter } from "./converter";
@@ -16,7 +16,7 @@ function MobileProviderTicker({ providers }: { providers: ProviderInfo[] }) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <div className="mb-8 overflow-hidden lg:hidden" aria-hidden="true">
+    <div className="provider-ticker mb-8 overflow-hidden lg:hidden" aria-hidden="true">
       <motion.div
         className="flex w-max"
         animate={prefersReducedMotion ? undefined : { x: ["0%", "-50%"] }}
@@ -41,6 +41,8 @@ function AnimatedHeroPhrase() {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [characterCount, setCharacterCount] = useState(0);
   const [phase, setPhase] = useState<"typing" | "resting" | "clearing" | "complete">("typing");
+  const [phraseHeight, setPhraseHeight] = useState<number | undefined>(undefined);
+  const measureRef = useRef<HTMLSpanElement | null>(null);
   const phrase = heroPhrases[phraseIndex];
 
   useEffect(() => {
@@ -72,25 +74,47 @@ function AnimatedHeroPhrase() {
     return () => clearTimeout(timeout);
   }, [characterCount, phase, phrase.length, phraseIndex, prefersReducedMotion]);
 
-  const showCursor = !prefersReducedMotion && phase !== "resting" && phase !== "complete";
+  // Measure the tallest of the phrases so the line keeps one fixed height and the
+  // copy below never shifts while typing (instead of reserving a guessed 2 lines).
+  useLayoutEffect(() => {
+    const el = measureRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      let tallest = 0;
+      for (const candidate of heroPhrases) {
+        el.textContent = candidate;
+        tallest = Math.max(tallest, el.getBoundingClientRect().height);
+      }
+      el.textContent = "";
+      if (tallest > 0) setPhraseHeight(tallest);
+    };
+
+    measure();
+    document.fonts.ready.then(measure).catch(() => {});
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   return (
     <>
-      <span className="block" aria-hidden="true">
+      <span
+        className="block"
+        style={phraseHeight === undefined ? undefined : { minHeight: `${phraseHeight}px` }}
+        aria-hidden="true"
+      >
         <motion.span
           animate={{ opacity: phase === "clearing" ? 0.25 : 1 }}
           transition={{ duration: 0.65, ease: "easeInOut" }}
         >
           {prefersReducedMotion ? phrase : phrase.slice(0, characterCount)}
         </motion.span>
-        {showCursor && (
-          <motion.span
-            className="ml-1 inline-block h-[1em] w-[2px] translate-y-[.12em] bg-primary align-baseline"
-            animate={{ opacity: [1, 0, 1] }}
-            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-          />
-        )}
       </span>
+      <span
+        ref={measureRef}
+        aria-hidden="true"
+        className="invisible pointer-events-none absolute left-0 top-0 w-full"
+      />
       <span className="sr-only">Catch the right moment.</span>
     </>
   );
@@ -121,13 +145,26 @@ function ProviderRateCards({
     .slice(0, 3);
 
   return (
-    <div className="mt-7 space-y-2 text-left">
+    <motion.div
+      className="mt-7 space-y-2 text-left"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3, margin: "0px 0px -40px 0px" }}
+    >
       {top3.map((provider, i) => (
         <motion.div
           key={provider.id}
-          initial={prefersReducedMotion ? false : { opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.38, ease, delay: 0.3 + i * 0.1 }}
+          custom={i}
+          variants={{
+            hidden: prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -16 },
+            visible: (custom: number) => ({
+              opacity: 1,
+              x: 0,
+              transition: prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.38, ease, delay: 0.3 + custom * 0.1 },
+            }),
+          }}
           className={`flex items-center gap-3 rounded-[14px] px-3.5 py-2.5 ${
             i === 0 ? "bg-primary" : "bg-[#f5f4fa]"
           }`}
@@ -154,9 +191,15 @@ function ProviderRateCards({
       ))}
       <motion.a
         href="#compare"
-        initial={prefersReducedMotion ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, ease, delay: 0.62 }}
+        variants={{
+          hidden: prefersReducedMotion ? { opacity: 1 } : { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: prefersReducedMotion
+              ? { duration: 0 }
+              : { duration: 0.3, ease, delay: 0.62 },
+          },
+        }}
         className="flex items-center gap-1 pt-1 text-[12px] font-semibold text-primary transition-opacity hover:opacity-75"
       >
         Compare all providers
@@ -164,7 +207,7 @@ function ProviderRateCards({
           <path d="m7 4 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </motion.a>
-    </div>
+    </motion.div>
   );
 }
 
@@ -199,7 +242,7 @@ export function Hero({
           {/* Left column: headline + provider rate cards */}
           <div className="mb-10 text-center lg:mb-0 lg:text-left">
             <motion.span
-              className="block text-[16px] font-semibold uppercase tracking-wider text-primary"
+              className="block font-display text-[14px] font-semibold uppercase tracking-wider text-primary sm:text-[16px]"
               initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
@@ -207,7 +250,7 @@ export function Hero({
               Smart currency exchange
             </motion.span>
 
-            <h1 className="mb-0 mt-4 text-[24px] font-semibold leading-[1.05] tracking-normal text-primary sm:text-[36px] lg:text-[48px] xl:text-[44px]">
+            <h1 className="relative mb-0 mt-4 text-[24px] font-semibold leading-[1.05] tracking-normal text-primary sm:text-[36px] lg:text-[48px] xl:text-[44px]">
               <motion.span
                 className="block"
                 aria-hidden="true"
@@ -221,12 +264,12 @@ export function Hero({
             </h1>
 
             <motion.p
-              className="mx-auto mt-4 max-w-[400px] text-[14px] leading-[1.65] text-[#55536e] lg:mx-0"
+              className="mx-auto mt-4 max-w-[400px] font-display text-[14px] leading-[1.65] text-[#55536e] lg:mx-0"
               initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: "easeOut", delay: 0.16 }}
             >
-              Live exchange rates from multiple providers — see exactly who gives your recipient the most.
+              Live exchange rates from multiple providers.
             </motion.p>
 
             <div className="hidden lg:block">

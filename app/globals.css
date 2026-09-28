@@ -112,6 +112,17 @@
   object-fit: contain;
 }
 
+/* Mobile provider ticker: tighter circles than the desktop currency rail */
+.provider-ticker .currency-floater {
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+}
+
+.provider-ticker .provider-floater-logo {
+  padding: 2px;
+}
+
 @media (min-width: 1024px) {
   .currency-rail {
     position: relative;

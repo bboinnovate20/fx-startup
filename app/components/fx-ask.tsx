@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { Currency } from "./data/fx-data";
 
-const suggestions = ["Is now a good time?", "Cheapest provider?", "7-day trend"];
+const suggestions = ["What is yesterday price?", "Cheapest provider?", "7-day trend", ];
 
 export function FxAsk({ from, to, amount }: { from: Currency; to: Currency; amount: string }) {
   const router = useRouter();
@@ -39,7 +39,7 @@ export function FxAsk({ from, to, amount }: { from: Currency; to: Currency; amou
             aria-label="Send question"
             className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] border-0 bg-primary text-[21px] leading-none text-white transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <img src="/icons/arrow-up-left.svg" alt="" aria-hidden="true" className="h-3.5 w-3.5 brightness-0 invert" />
+            <img src="/icons/arrow-up-right.svg" alt="" aria-hidden="true" className="h-3.5 w-3.5 brightness-0 invert" />
           </button>
         </div>
         <div

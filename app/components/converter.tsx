@@ -45,19 +45,19 @@ export function Converter({
   return (
     <section
       className={compact
-        ? "w-full rounded-[16px] border border-[#e4e1ef] bg-white p-4 text-left font-display"
-        : "mx-auto w-full max-w-[600px] rounded-[26px] border border-[#e6e9e4] bg-white px-5 pb-6 pt-6 text-left font-display shadow-[0_22px_60px_#12220d38] sm:px-[26px] sm:pb-7 sm:pt-7"}
+        ? "w-full rounded-full border border-[#e4e1ef] bg-white p-4 text-left font-display"
+        : "mx-auto w-full max-w-[600px] rounded-[22px] border border-[#e6e9e4] bg-white px-4 pb-5 pt-5 text-left font-display shadow-[0_12px_30px_#12220d38] sm:rounded-[26px] sm:px-[26px] sm:pb-7 sm:pt-7"}
       id="converter"
       aria-labelledby="converter-title"
     >
       {/* <h2 id="converter-title" className="sr-only">Currency converter</h2> */}
-      <div className={compact ? "mb-3 text-center" : "mb-6 text-center"}>
-        <p className="m-0 flex items-center justify-center gap-1.5 text-[14px] font-semibold text-[#30472b]">
+      <div className={compact ? "mb-3 text-center" : "mb-4 text-center sm:mb-6"}>
+        <p className="m-0 flex items-center justify-center gap-1.5 text-[14px] font-semibold">
           Market Exchange Rate
         </p>
         <a
           href="#trend"
-          className={`mx-auto inline-flex ${compact ? "mt-2 min-h-9 text-[14px]" : "mt-3 min-h-[50px] text-[16px]"} max-w-full items-center gap-2.5 rounded-full bg-[#eef0ec] px-5 font-semibold tracking-[-0.02em] text-[#171a18] transition-colors hover:bg-[#e4e8e1] sm:px-6`}
+          className={`mx-auto inline-flex ${compact ? "mt-2 min-h-9 text-[14px]" : "mt-2.5 min-h-[44px] text-[14px] sm:mt-3 sm:min-h-[50px] sm:text-[16px]"} max-w-full items-center gap-2.5 rounded-full bg-[#eef0ec] px-4 font-semibold tracking-[-0.02em] text-[#171a18] transition-colors hover:bg-[#e4e8e1] sm:px-6`}
           aria-label={`${rate === null ? `Exchange rate unavailable for ${from} to ${to}` : `1 ${from} equals ${number(rate, 4)} ${to}`}. View rate history`}
         >
           <span className="whitespace-nowrap">1 {from} = {rate === null ? "—" : number(rate, 4)} {to}</span>
@@ -68,7 +68,7 @@ export function Converter({
       </div>
 
       <label htmlFor="send-amount" className="mb-1 block text-[12px] font-medium text-[#343b33]">Amount</label>
-      <div className={`flex items-center gap-2 rounded-[9px] border border-[#c5c9c4] px-3 focus-within:border-2 focus-within:border-navy sm:px-3.5 ${compact ? "min-h-12" : "min-h-[58px] sm:min-h-[64px]"}`}>
+      <div className={`flex items-center  rounded-full border border-[#c5c9c4] pl-3 pr-2 focus-within:border-2 focus-within:border-navy sm:px-3.5 ${compact ? "min-h-12" : "min-h-[52px] sm:min-h-[64px]"}`}>
         <input
           id="send-amount"
           inputMode="decimal"
@@ -76,24 +76,24 @@ export function Converter({
           value={amount}
           onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, ""))}
           aria-label={`Amount in ${from}`}
-          className={`min-w-0 flex-1 border-0 bg-transparent p-0 font-display font-semibold tracking-[-.04em] text-[#202421] outline-none ${compact ? "text-[18px]" : "text-[22px] sm:text-[24px]"}`}
+          className={`min-w-0 growflex-1 border-0 bg-transparent p-0 font-display font-semibold text-[#202421] outline-none ${compact ? "text-[18px]" : "text-[20px] sm:text-[24px]"}`}
         />
         <CurrencyPicker value={from} label="Source currency" onChange={setFrom} variant="hero" />
       </div>
 
-      <div className={`relative z-[1] flex items-center ${compact ? "h-10" : "h-[52px]"} justify-center`} aria-label="Swap source and target currencies">
+      <div className={`relative z-[1] flex items-center ${compact ? "h-10" : "h-[44px] sm:h-[52px]"} justify-center`} aria-label="Swap source and target currencies">
         <button
           type="button"
           aria-label="Swap currencies"
           onClick={swapCurrencies}
-          className={`grid place-items-center rounded-full ${compact ? "h-9 w-9" : "h-11 w-11"} border-0 bg-primary text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
+          className={`grid place-items-center rounded-full ${compact ? "h-9 w-9" : "h-10 w-10 sm:h-11 sm:w-11"} border-0 bg-primary text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
         >
           <img src="/icons/switch.svg" alt="" className="h-auto w-5 brightness-0 invert" />
         </button>
       </div>
 
       <label htmlFor="receive-amount" className="mb-1 block text-[12px] font-medium text-[#343b33]">Converted to</label>
-      <div className={`flex items-center gap-2 rounded-[9px] border border-[#c5c9c4] px-3 focus-within:border-2 focus-within:border-navy sm:px-3.5 ${compact ? "min-h-12" : "min-h-[58px] sm:min-h-[64px]"}`}>
+      <div className={`flex items-center gap-2 rounded-full border border-[#c5c9c4] pl-3 pr-2 focus-within:border-2 focus-within:border-navy sm:px-3.5 ${compact ? "min-h-12" : "min-h-[52px] sm:min-h-[64px]"}`}>
         <input
           id="receive-amount"
           inputMode="decimal"
@@ -110,7 +110,7 @@ export function Converter({
             }
           }}
           aria-label={`Converted amount in ${to}`}
-          className={`min-w-0 flex-1 border-0 bg-transparent p-0 font-display font-semibold tracking-[-.04em] text-[#202421] outline-none disabled:cursor-not-allowed disabled:text-[#818980] ${compact ? "text-[18px]" : "text-[22px] sm:text-[24px]"}`}
+          className={`min-w-0 flex-1 border-0 bg-transparent p-0 font-display font-semibold text-[#202421] outline-none disabled:cursor-not-allowed disabled:text-[#818980] ${compact ? "text-[18px]" : "text-[20px] sm:text-[24px]"}`}
         />
         <CurrencyPicker value={to} label="Target currency" onChange={setTo} variant="hero" />
       </div>
@@ -119,11 +119,11 @@ export function Converter({
       <button
         type="button"
         onClick={() => document.getElementById("compare")?.scrollIntoView({ behavior: "smooth" })}
-        className="mt-3 h-[52px] w-full rounded-full border-0 bg-primary text-[15px] font-semibold text-white transition hover:bg-primary-hover"
+        className="mt-3 h-[48px] w-full rounded-full border-0 bg-primary text-[14px] font-semibold text-white transition hover:bg-primary-hover sm:h-[52px] sm:text-[15px]"
       >
         Compare providers
       </button>
-      <a href="#alerts" className="mt-1.5 flex h-[43px] w-full items-center justify-center rounded-full border border-gray-300 bg-white text-[13px] font-semibold text-black transition hover:bg-[#f5faf2]">
+      <a href="#alerts" className="mt-1.5 flex h-[40px] w-full items-center justify-center rounded-full border border-gray-300 bg-white text-[13px] font-semibold text-black transition hover:bg-[#f5faf2] sm:h-[43px]">
         Track exchange rate
       </a>
       </>)}

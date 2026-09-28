@@ -100,7 +100,7 @@ export function ProviderComparison({
                 placeholder="Enter amount to convert"
                 value={amount}
                 onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, ""))}
-                className={`min-w-0 flex-1 border-0 bg-transparent font-bold ${compact ? "text-base" : "text-lg"} text-navy outline-none`}
+                className={`min-w-0 flex-1 border-0 bg-transparent font-semibold ${compact ? "text-base" : "text-lg"} text-navy outline-none`}
               />
               <span className="text-sm font-bold text-[#64748b]">{from}</span>
           </label>
@@ -161,7 +161,6 @@ export function ProviderComparison({
         >
           <p className="m-0 text-[13px] leading-relaxed text-navy">
             <strong className="font-semibold">Want a better rate?</strong>{" "}
-            Set a rate alert and we’ll let you know when it reaches your target.
           </p>
           <a href="#alerts" className="shrink-0 rounded-full bg-primary px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-hover">
             Set an alert
@@ -198,13 +197,13 @@ export function ProviderComparison({
                       )}
                     </div>
                     <div className="min-w-[64px] flex-1 sm:min-w-[80px]">
-                      <div className={`truncate font-bold ${compact ? "text-[14px]" : "text-sm sm:text-base"} ${isBest ? "text-white" : "text-navy"}`}>
+                      <div className={`truncate font-semibold ${compact ? "text-[14px]" : "text-sm sm:text-base"} ${isBest ? "text-white" : "text-navy"}`}>
                         {provider.name}{isBest && <span className="ml-2 hidden rounded-full bg-white/20 px-2 py-1 align-middle text-[10px] font-semibold sm:inline">Best rate</span>}
                       </div>
-                      <div className={`mt-0.5 text-[11px] ${compact ? "" : "sm:text-xs"} ${isBest ? "text-white/85" : "text-[#68768a]"}`}>
+                      {/* <div className={`mt-0.5 text-[11px] ${compact ? "" : "sm:text-xs"} ${isBest ? "text-white/85" : "text-[#68768a]"}`}>
                         {provider.fee === 0 ? "No transfer fee" : `Est. ${money(provider.fee * scale, from)} fee`}
                         <span className="mx-1.5" aria-hidden="true">·</span>{provider.time}
-                      </div>
+                      </div> */}
                     </div>
                     <div
                       aria-label={`${provider.name} payout is ${roundedDifference === 0 ? "the lowest shown" : `${number(roundedDifference, 1)} percent higher than the lowest shown`}`}
@@ -223,7 +222,7 @@ export function ProviderComparison({
                         {roundedDifference > 0 ? "higher" : "lowest"}
                       </span>
                     </div>
-                    <div className={`shrink-0 text-right text-sm font-extrabold ${compact ? "sm:text-base" : "sm:text-lg"} ${isBest ? "text-white" : "text-navy"}`}>
+                    <div className={`shrink-0 text-right text-sm font-semibold ${compact ? "sm:text-base" : "sm:text-lg"} ${isBest ? "text-white" : "text-navy"}`}>
                       {money(provider.payout, to)}
                       <div className={`mt-0.5 text-[10px] font-medium ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>recipient gets</div>
                     </div>
