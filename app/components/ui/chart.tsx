@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useId, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { ResponsiveContainer, Tooltip, type TooltipProps } from "recharts";
+import { ResponsiveContainer, Tooltip, type TooltipContentProps } from "recharts";
 
 export type ChartConfig = Record<string, { label?: ReactNode; color?: string }>;
 
@@ -41,16 +41,24 @@ export function ChartContainer({
 
 export const ChartTooltip = Tooltip;
 
+type ChartTooltipContentProps = Omit<
+  TooltipContentProps<number, string>,
+  "payload" | "coordinate" | "active" | "accessibilityLayer" | "activeIndex" | "label" | "formatter"
+> & {
+  active?: boolean;
+  payload?: TooltipContentProps<number, string>["payload"];
+  label?: TooltipContentProps<number, string>["label"];
+  hideLabel?: boolean;
+  valueFormatter?: (value: number, name: string) => ReactNode;
+};
+
 export function ChartTooltipContent({
   active,
   payload,
   label,
   hideLabel = false,
-  formatter,
-}: TooltipProps<number, string> & {
-  hideLabel?: boolean;
-  formatter?: (value: number, name: string) => ReactNode;
-}) {
+  valueFormatter,
+}: ChartTooltipContentProps) {
   const config = useContext(ChartContext);
   if (!active || !payload?.length) return null;
 
@@ -60,8 +68,8 @@ export function ChartTooltipContent({
       {payload.map((item, index) => {
         const key = String(item.dataKey ?? item.name ?? "value");
         const title = config?.[key]?.label ?? item.name ?? key;
-        const value = typeof item.value === "number" && formatter
-          ? formatter(item.value, key)
+        const value = typeof item.value === "number" && valueFormatter
+          ? valueFormatter(item.value, key)
           : String(item.value ?? "—");
         return (
           <div key={`${key}-${index}`} className="flex items-center justify-between gap-4">
