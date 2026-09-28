@@ -7,11 +7,13 @@ export function CurrencyPicker({
   onChange,
   label,
   variant = "default",
+  align = "left",
 }: {
   value: Currency;
   onChange: (value: Currency) => void;
   label: string;
   variant?: "default" | "hero" | "pair";
+  align?: "left" | "right";
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -68,7 +70,7 @@ export function CurrencyPicker({
 
   return (
     <div
-      className={`currency-picker bg-gray-100 rounded-full font-display `}
+      className={`currency-picker relative bg-gray-100 rounded-full font-display `}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
           setOpen(false);
@@ -109,7 +111,7 @@ export function CurrencyPicker({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(280px,calc(100vw-32px))] overflow-hidden rounded-xl border border-[#dce4ee] bg-white p-1.5 text-[#172b4d] shadow-[0_16px_40px_rgba(18,40,72,0.18)]">
+        <div className={`absolute ${align === "right" ? "right-0" : "left-0"} top-full z-50 mt-2 w-[min(280px,calc(100vw-32px))] overflow-hidden rounded-xl border border-[#dce4ee] bg-white p-1.5 text-[#172b4d] shadow-[0_16px_40px_rgba(18,40,72,0.18)]`}>
           <div className="flex h-10 items-center gap-2 border-b border-[#edf1f6] px-2">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-[#8390a2]">
               <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.5" />

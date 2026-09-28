@@ -68,7 +68,7 @@ export function Converter({
       </div>
 
       <label htmlFor="send-amount" className="mb-1 block text-[12px] font-medium text-[#343b33]">Amount</label>
-      <div className={`flex items-center  rounded-full border border-[#c5c9c4] pl-3 pr-2 focus-within:border-2 focus-within:border-navy sm:px-3.5 ${compact ? "min-h-12" : "min-h-[52px] sm:min-h-[64px]"}`}>
+      <div className={`flex items-center rounded-full border border-[#c5c9c4] pl-3 pr-2 focus-within:border-2 focus-within:border-navy sm:px-3.5 ${compact ? "min-h-12" : "min-h-[52px] sm:min-h-[64px]"}`}>
         <input
           id="send-amount"
           inputMode="decimal"
@@ -76,9 +76,9 @@ export function Converter({
           value={amount}
           onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, ""))}
           aria-label={`Amount in ${from}`}
-          className={`min-w-0 growflex-1 border-0 bg-transparent p-0 font-display font-semibold text-[#202421] outline-none ${compact ? "text-[18px]" : "text-[20px] sm:text-[24px]"}`}
+          className={`min-w-0 grow flex-1 border-0 bg-transparent p-0 font-display font-semibold text-[#202421] outline-none ${compact ? "text-[18px]" : "text-[20px] sm:text-[24px]"}`}
         />
-        <CurrencyPicker value={from} label="Source currency" onChange={setFrom} variant="hero" />
+        <CurrencyPicker value={from} label="Source currency" onChange={setFrom} variant="hero" align="right" />
       </div>
 
       <div className={`relative z-[1] flex items-center ${compact ? "h-10" : "h-[44px] sm:h-[52px]"} justify-center`} aria-label="Swap source and target currencies">
@@ -112,7 +112,7 @@ export function Converter({
           aria-label={`Converted amount in ${to}`}
           className={`min-w-0 flex-1 border-0 bg-transparent p-0 font-display font-semibold text-[#202421] outline-none disabled:cursor-not-allowed disabled:text-[#818980] ${compact ? "text-[18px]" : "text-[20px] sm:text-[24px]"}`}
         />
-        <CurrencyPicker value={to} label="Target currency" onChange={setTo} variant="hero" />
+        <CurrencyPicker value={to} label="Target currency" onChange={setTo} variant="hero" align="right" />
       </div>
 
       {!compact && (<>
