@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { number, type Currency } from "../data/fx-data";
 import { CurrencyPicker } from "../currency-picker";
@@ -22,6 +23,7 @@ import {
 
 type HistoryPeriod = "day" | "week";
 export type RateHistoryPeriod = HistoryPeriod;
+const ease = [0.22, 1, 0.36, 1] as const;
 const periods: { id: HistoryPeriod; label: string; days: number; movement: number }[] = [
   { id: "day", label: "24 hours", days: 1, movement: 0.002 },
   { id: "week", label: "1 week", days: 7, movement: 0.004 },
@@ -64,6 +66,34 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
   compact?: boolean;
 }) {
   const [localPeriod, setLocalPeriod] = useState<HistoryPeriod>("week");
+  const prefersReducedMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [chartInView, setChartInView] = useState(false);
+  // The chart stays unmounted until the card is scrolled into view, so the line's
+  // draw-in plays at the same moment as the card reveal instead of off-screen.
+  const showChart =  chartInView;
+  const chartAreaClass = compact ? "h-[210px] w-full min-w-0" : "h-[300px] w-full min-w-0 sm:h-[370px]";
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    const element = containerRef.current;
+    if (!element || typeof IntersectionObserver === "undefined") {
+      setChartInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setChartInView(true);
+          observer.disconnect();
+        }
+      },
+      // Same trigger as the card's whileInView: once, 60px inside the viewport, 20% visible.
+      { rootMargin: "0px 0px -60px 0px", threshold: 0.2 },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [prefersReducedMotion]);
   const period = periodValue ?? localPeriod;
   const changePeriod = (nextPeriod: HistoryPeriod) => {
     setLocalPeriod(nextPeriod);
@@ -83,6 +113,16 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
   } satisfies ChartConfig;
 
   return (
+    <motion.div
+      ref={containerRef}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2, margin: "0px 0px -60px 0px" }}
+      variants={{
+        hidden: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease } },
+      }}
+    >
     <Card className={`mx-auto w-full max-w-[1020px] gap-0 overflow-hidden ${compact ? "rounded-[16px] font-display" : "rounded-[12px] px-2"} border border-[var(--line)] bg-white p-0 text-[#171a18] shadow-none`}>
       <CardHeader className={`flex flex-wrap items-center justify-between ${compact ? "gap-3 px-4 pb-0 pt-4" : "gap-4 px-7 pb-0 pt-6 max-[700px]:px-1 max-[700px]:pt-5"}`}>
         <div className="min-w-0">
@@ -113,9 +153,10 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
         </div>
       </CardHeader>
       <CardContent className={compact ? "px-2 pb-0 pt-3" : "px-5 pb-0 pt-5 max-[700px]:px-1"}>
+        {showChart ? (
         <ChartContainer
           config={chartConfig}
-          className={compact ? "h-[210px] w-full min-w-0" : "h-[300px] w-full min-w-0 sm:h-[370px]"}
+          className={chartAreaClass}
         >
           <LineChart
             accessibilityLayer
@@ -155,14 +196,21 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
               strokeWidth={1.8}
               dot={false}
               activeDot={{ r: 4, fill: "var(--color-rate)", stroke: "white", strokeWidth: 2 }}
+              isAnimationActive={!prefersReducedMotion}
+              animationDuration={900}
+              animationEasing="ease-out"
             />
           </LineChart>
         </ChartContainer>
+        ) : (
+          <div className={chartAreaClass} aria-hidden="true" />
+        )}
       </CardContent>
       <CardFooter className={`flex flex-wrap items-center justify-between gap-2 border-t border-[#e5e7e4] text-[11px] text-[#667064] ${compact ? "mt-2 px-4 py-3" : "mt-3 px-7 pb-5 pt-4 max-[700px]:px-1"}`}>
         <span className="font-medium text-primary">1 {from} = {number(rate, digits)} {to}</span>
         <span>Illustrative history · {selectedPeriod.label}</span>
       </CardFooter>
     </Card>
+    </motion.div>
   );
 }

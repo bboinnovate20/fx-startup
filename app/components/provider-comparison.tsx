@@ -150,13 +150,24 @@ export function ProviderComparison({
 
         </div>
 
-        <div className={compact ? "space-y-2 p-3" : "space-y-3 p-4 sm:p-6"}>
+        <motion.div
+          className={compact ? "space-y-2 p-3" : "space-y-3 p-4 sm:p-6"}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2, margin: "0px 0px -60px 0px" }}
+        >
 
       {!compact && (
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, ease, delay: 0.15 }}
+          variants={{
+            hidden: prefersReducedMotion ? { opacity: 1 } : { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.3, ease, delay: 0.15 },
+            },
+          }}
           className="mb-3.5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#e1e9f5] bg-[#f4f7fc] px-4 py-3 sm:px-4.5"
         >
           <p className="m-0 text-[13px] leading-relaxed text-navy">
@@ -167,7 +178,7 @@ export function ProviderComparison({
           </a>
         </motion.div>
       )}
-          <AnimatePresence initial={false}>
+          <AnimatePresence>
             {rate ? results.map((provider, index) => {
               const isBest = index === 0;
               const difference = ((provider.rate / lowestProviderRate) - 1) * 100;
@@ -178,14 +189,20 @@ export function ProviderComparison({
                 <motion.article
                   key={provider.id}
                   layout="position"
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  custom={index}
+                  variants={{
+                    hidden: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 },
+                    visible: (custom: number) => ({
+                      opacity: 1,
+                      y: 0,
+                      transition: prefersReducedMotion
+                        ? { duration: 0 }
+                        : { duration: 0.3, ease, delay: 0.15 + custom * 0.05 },
+                    }),
+                  }}
                   exit={{ opacity: 0 }}
                   whileHover={prefersReducedMotion ? undefined : { y: -2 }}
-                  transition={{
-                    default: { duration: 0.3, ease, delay: prefersReducedMotion ? 0 : index * 0.05 },
-                    layout: rowLayoutTransition,
-                  }}
+                  transition={{ layout: rowLayoutTransition }}
                   className={`rounded-[24px] transition-colors ${compact ? "p-2.5 pr-5" : "p-3 sm:p-3.5"} ${isBest ? "bg-primary text-white" : "bg-[#f0f2f5] text-navy"}`}
                 >
                   <div className="flex items-center gap-2 sm:gap-3.5">
@@ -232,15 +249,17 @@ export function ProviderComparison({
             }) : (
               <motion.div
                 key="empty"
-                initial={prefersReducedMotion ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
+                variants={{
+                  hidden: prefersReducedMotion ? { opacity: 1 } : { opacity: 0 },
+                  visible: { opacity: 1, transition: { duration: 0.3 } },
+                }}
                 className="rounded-[16px] bg-[#f6f8fb] px-5 py-8 text-center text-sm text-[#68768a]"
               >
                 Estimates aren’t available for {from} to {to} yet.
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         <div className={`border-t border-[#e9edf3] text-center text-[#8490a1] ${compact ? "px-4 py-2.5 text-[11px]" : "px-4 py-3 text-[11px]"}`}>
           Sample estimates only. Rates and fees are not live quotes.
