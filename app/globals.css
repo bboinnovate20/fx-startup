@@ -125,6 +125,27 @@
   animation: glass-sheen 1.8s ease-in-out infinite;
 }
 
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: #d9dcd8;
+  pointer-events: none;
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 12%,
+    rgb(255 255 255 / 0.38) 48%,
+    transparent 88%
+  );
+  transform: translateX(-100%);
+  animation: glass-sheen 1.6s ease-in-out infinite;
+}
+
 @keyframes glass-sheen {
   to {
     transform: translateX(100%);
@@ -132,7 +153,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass-shimmer::after {
+  .glass-shimmer::after,
+  .skeleton-shimmer::after {
     animation: none;
     opacity: 0;
   }

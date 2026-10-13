@@ -49,20 +49,26 @@ export function ProviderDirectory({ providers }: { providers: ProviderInfo[] }) 
           className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-4"
         >
           {providers.map((provider) => (
-            <motion.li key={provider.id} variants={itemVariants}>
+            <motion.li
+              key={provider.id}
+              variants={itemVariants}
+              className="flex min-w-0 items-center gap-3 rounded-[14px] border border-white/20 bg-white p-3 sm:p-4"
+            >
+              <motion.span
+                variants={logoVariants}
+                className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full sm:h-12 sm:w-12"
+              >
+                <img className="h-full w-full object-cover" src={provider.logo} alt="" loading="lazy" />
+              </motion.span>
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-black sm:text-base">{provider.name}</span>
               <a
                 href={provider.url}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="flex min-w-0 items-center gap-3 rounded-[14px] border border-white/20 bg-white p-3 transition-colors hover:bg-white/20 sm:p-4"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-white"
               >
-                <motion.span
-                  variants={logoVariants}
-                  className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full sm:h-12 sm:w-12"
-                >
-                  <img className="h-full w-full object-cover" src={provider.logo} alt="" loading="lazy" />
-                </motion.span>
-                <span className="truncate text-sm font-semibold text-black sm:text-base">{provider.name}</span>
+                Visit
+                <img src="/icons/external-link-stroke-rounded.svg" alt="" className="h-3.5 w-3.5 brightness-0 invert" />
               </a>
             </motion.li>
           ))}

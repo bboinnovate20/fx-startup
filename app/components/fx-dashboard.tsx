@@ -41,9 +41,11 @@ export default function FxDashboard({
     };
   }, []);
 
-  const quotedProviders = providers.filter((provider) =>
-    market.quotes.some((quote) => quote.available && quote.id === provider.id),
-  );
+  const quotedProviders = providers.flatMap((provider) => {
+    const quote = market.quotes.find((item) => item.available && item.id === provider.id);
+    if (!quote) return [];
+    return [{ ...provider, url: quote.website || provider.url }];
+  });
 
   return (
     <>

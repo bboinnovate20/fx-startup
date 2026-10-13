@@ -15,6 +15,7 @@ export type PlatformRow = {
   payout: number | null;
   speed: string | null;
   updatedAt: string | null;
+  website: string | null;
   available: boolean;
 };
 
@@ -110,6 +111,7 @@ export function useFxMarket(
             receivePerUnit: receivePerUnit ?? quoteRate,
             speed: quote.speed,
             updatedAt: quote.lastUpdated ?? quote.retrievedAt ?? null,
+            website: quote.website ?? logos.get(quote.providerId)?.url ?? null,
             available: true,
           });
         }
@@ -176,6 +178,7 @@ export function useFxMarket(
           quote.receivePerUnit == null ? null : quote.receivePerUnit * scale,
         speed: quote.speed,
         updatedAt: quote.updatedAt,
+        website: quote.website,
         available: quote.available,
       }))
       .sort((left, right) => {

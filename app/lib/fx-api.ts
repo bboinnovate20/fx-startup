@@ -35,6 +35,7 @@ export type FxQuote = {
   logo?: string | null;
   lastUpdated?: string | null;
   retrievedAt?: string | null;
+  website?: string | null;
 };
 
 export type FxComparison = {

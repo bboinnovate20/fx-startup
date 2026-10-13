@@ -215,7 +215,7 @@ function ProviderRateCards({
               : { duration: 0.3, ease, delay: 0.62 },
           },
         }}
-        className="flex items-center gap-1 pt-1 text-[12px] font-semibold text-primary transition-opacity hover:opacity-75"
+        className="flex items-center gap-1 pt-1 text-[12px] font-semibold text-white transition-opacity hover:opacity-75"
       >
         Compare all providers
         <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0">
@@ -259,7 +259,7 @@ export function Hero({
       id="rates"
     >
       <div className="relative z-10 mx-auto w-full max-w-[1220px]">
-        <div className="lg:grid lg:grid-cols-[1fr_460px] lg:items-center lg:gap-16 xl:grid-cols-[1fr_500px] xl:gap-24">
+        <div className="lg:grid lg:grid-cols-[1fr_414px] lg:items-center lg:gap-16 xl:grid-cols-[1fr_450px] xl:gap-24">
           {/* Left column: headline + provider rate cards */}
           <div className="mb-10 text-center lg:mb-0 lg:max-w-[560px] lg:text-left">
             <motion.span

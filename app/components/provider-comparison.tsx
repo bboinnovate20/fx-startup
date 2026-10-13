@@ -247,6 +247,21 @@ export function ProviderComparison({
                           {updated}
                         </div>
                       ) : null}
+                      {provider.website ? (
+                        <a
+                          href={provider.website}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${isBest ? "bg-white/15 text-white" : "bg-white text-navy"}`}
+                        >
+                          Visit
+                          <img
+                            src="/icons/external-link-stroke-rounded.svg"
+                            alt=""
+                            className={`h-3.5 w-3.5 ${isBest ? "brightness-0 invert" : ""}`}
+                          />
+                        </a>
+                      ) : null}
                       {/* <div className={`mt-0.5 text-[11px] ${compact ? "" : "sm:text-xs"} ${isBest ? "text-white/85" : "text-[#68768a]"}`}>
                         {provider.fee === 0 ? "No transfer fee" : `Est. ${money(provider.fee * scale, from)} fee`}
                         <span className="mx-1.5" aria-hidden="true">·</span>{provider.time}
