@@ -2,12 +2,25 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
-import { currencies, money, number, providerSeed, type Currency } from "./data/fx-data";
-import type { ProviderInfo } from "./data/providers";
+import { currencies, money, number, type Currency } from "./data/fx-data";
+import type { MarketStatus, PlatformRow } from "../lib/use-fx-market";
 import { ArrowIcon } from "./ui/ArrowIcon";
 import { SectionHeading } from "./ui/SectionHeading";
 
 const ease = [0.22, 1, 0.36, 1] as const;
+
+function updatedLabel(iso: string | null) {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  const formatted = date.toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `Updated ${formatted}`;
+}
 const rowLayoutTransition = { type: "spring", bounce: 0, visualDuration: 0.4 } as const;
 
 export function ProviderComparison({
@@ -16,7 +29,10 @@ export function ProviderComparison({
   amount,
   setAmount,
   rate,
-  providers,
+  quotes,
+  bestId = null,
+  status = "ready",
+  message = null,
   compact = false,
   showInput = true,
 }: {
@@ -25,22 +41,19 @@ export function ProviderComparison({
   amount: string;
   setAmount: (amount: string) => void;
   rate: number | null;
-  providers: ProviderInfo[];
+  quotes: PlatformRow[];
+  bestId?: string | null;
+  status?: MarketStatus;
+  message?: string | null;
   compact?: boolean;
   showInput?: boolean;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const [shareStatus, setShareStatus] = useState("Share");
-  const amountValue = Number(amount.replaceAll(",", "")) || 0;
-  const scale = rate ? rate / providerSeed[0].rate : 0;
-  const results = providerSeed
-    .map((provider) => {
-      const directoryEntry = providers.find((item) => item.id === provider.id);
-      const payout = amountValue * provider.rate * scale;
-      return { ...provider, logo: directoryEntry?.logo, payout };
-    })
-    .sort((a, b) => b.payout - a.payout);
-  const lowestProviderRate = Math.min(...providerSeed.map((provider) => provider.rate));
+  const availableRates = quotes.flatMap((provider) =>
+    provider.available && provider.rate != null ? [provider.rate] : [],
+  );
+  const lowestProviderRate = availableRates.length ? Math.min(...availableRates) : null;
 
   async function shareComparison() {
     const url = new URL("/", window.location.origin);
@@ -179,12 +192,15 @@ export function ProviderComparison({
         </motion.div>
       )}
           <AnimatePresence>
-            {rate ? results.map((provider, index) => {
-              const isBest = index === 0;
-              const difference = ((provider.rate / lowestProviderRate) - 1) * 100;
-              const roundedDifference = Math.round(difference * 10) / 10;
-              const trend = roundedDifference > 0 ? "up" : roundedDifference < 0 ? "down" : "equal";
+            {quotes.length ? quotes.map((provider, index) => {
+              const isBest = provider.available && provider.id === (bestId ?? quotes.find((item) => item.available)?.id);
+              const difference = provider.available && provider.rate != null && lowestProviderRate
+                ? ((provider.rate / lowestProviderRate) - 1) * 100
+                : null;
+              const roundedDifference = difference == null ? null : Math.round(difference * 10) / 10;
+              const trend = roundedDifference == null || roundedDifference === 0 ? "equal" : roundedDifference > 0 ? "up" : "down";
               const trendIcon = trend === "equal" ? "/icons/arrow-right.svg" : `/icons/arrow-trending-${trend}.svg`;
+              const updated = provider.available ? updatedLabel(provider.updatedAt) : null;
               return (
                 <motion.article
                   key={provider.id}
@@ -208,7 +224,16 @@ export function ProviderComparison({
                   <div className="flex items-center gap-2 sm:gap-3.5">
                     <div className={`grid shrink-0 place-items-center overflow-hidden rounded-full bg-white ${compact ? "h-9 w-9" : "h-9 w-9 sm:h-11 sm:w-11"} ${provider.logo ? "" : "border border-black/5"}`}>
                       {provider.logo ? (
-                        <img src={provider.logo} alt={`${provider.name} logo`} className="h-full w-full rounded-full object-cover" />
+                        <img
+                          src={provider.logo}
+                          alt={`${provider.name} logo`}
+                          className="h-full w-full rounded-full object-cover"
+                          onError={(event) => {
+                            const image = event.currentTarget;
+                            const fallback = `/logos/${provider.id}.png`;
+                            if (!image.src.endsWith(fallback)) image.src = fallback;
+                          }}
+                        />
                       ) : (
                         <span className="text-base font-extrabold text-primary">{provider.mark}</span>
                       )}
@@ -217,13 +242,19 @@ export function ProviderComparison({
                       <div className={`truncate font-semibold ${compact ? "text-[14px]" : "text-sm sm:text-base"} ${isBest ? "text-white" : "text-navy"}`}>
                         {provider.name}{isBest && <span className="ml-2 hidden rounded-full bg-white/20 px-2 py-1 align-middle text-[10px] font-semibold sm:inline">Best rate</span>}
                       </div>
+                      {updated ? (
+                        <div suppressHydrationWarning className={`mt-0.5 text-[11px] ${isBest ? "text-white/80" : "text-[#68768a]"}`}>
+                          {updated}
+                        </div>
+                      ) : null}
                       {/* <div className={`mt-0.5 text-[11px] ${compact ? "" : "sm:text-xs"} ${isBest ? "text-white/85" : "text-[#68768a]"}`}>
                         {provider.fee === 0 ? "No transfer fee" : `Est. ${money(provider.fee * scale, from)} fee`}
                         <span className="mx-1.5" aria-hidden="true">·</span>{provider.time}
                       </div> */}
                     </div>
+                    {roundedDifference != null ? (
                     <div
-                      aria-label={`${provider.name} payout is ${roundedDifference === 0 ? "the lowest shown" : `${number(roundedDifference, 1)} percent higher than the lowest shown`}`}
+                      aria-label={`${provider.name} rate is ${roundedDifference === 0 ? "the lowest shown" : `${number(roundedDifference, 1)} percent higher than the lowest shown`}`}
                       className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-bold sm:px-2.5 sm:text-xs ${isBest ? "bg-white/15 text-white" : "bg-[#e6f7ef] text-[#16804f]"}`}
                     >
                       <span
@@ -239,9 +270,12 @@ export function ProviderComparison({
                         {roundedDifference > 0 ? "higher" : "lowest"}
                       </span>
                     </div>
-                    <div className={`shrink-0 text-right text-sm font-semibold ${compact ? "sm:text-base" : "sm:text-lg"} ${isBest ? "text-white" : "text-navy"}`}>
-                      {money(provider.payout, to)}
-                      <div className={`mt-0.5 text-[10px] font-medium ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>recipient gets</div>
+                    ) : null}
+                    <div className={`shrink-0 text-right text-sm font-bold ${compact ? "sm:text-base" : "sm:text-lg"} ${isBest ? "text-white" : "text-navy"}`}>
+                      {provider.available && provider.payout != null ? money(provider.payout, to) : "Not available yet"}
+                      <div className={`mt-0.5 text-[10px] font-medium ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>
+                        {provider.available ? (provider.speed ?? "recipient gets") : "no live quote"}
+                      </div>
                     </div>
                   </div>
                 </motion.article>
@@ -255,14 +289,16 @@ export function ProviderComparison({
                 }}
                 className="rounded-[16px] bg-[#f6f8fb] px-5 py-8 text-center text-sm text-[#68768a]"
               >
-                Estimates aren’t available for {from} to {to} yet.
+                {status === "loading"
+                  ? "Loading provider quotes…"
+                  : message ?? `Estimates aren’t available for ${from} to ${to} yet.`}
               </motion.div>
             )}
           </AnimatePresence>
         </motion.div>
 
         <div className={`border-t border-[#e9edf3] text-center text-[#8490a1] ${compact ? "px-4 py-2.5 text-[11px]" : "px-4 py-3 text-[11px]"}`}>
-          Sample estimates only. Rates and fees are not live quotes.
+          Live quotes come from connected providers.
         </div>
       </div>
     </section>

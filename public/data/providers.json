@@ -58,5 +58,23 @@
     "name": "Access Bank",
     "logo": "/logos/access.ico",
     "url": "https://accessbankplc.com"
+  },
+  {
+    "id": "profee",
+    "name": "Profee",
+    "logo": "/logos/profee.png",
+    "url": "https://www.profee.com"
+  },
+  {
+    "id": "eversend",
+    "name": "Eversend",
+    "logo": "/logos/eversend.png",
+    "url": "https://eversend.co"
+  },
+  {
+    "id": "instarem",
+    "name": "Instarem",
+    "logo": "/logos/instarem.png",
+    "url": "https://www.instarem.com"
   }
 ]

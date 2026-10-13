@@ -62,69 +62,7 @@ export const currencies = Object.fromEntries(currencyInfo) as Record<
   Currency,
   { icon: string; name: string; symbol: string; digits: number }
 >;
-export const pairRates: Record<string, number> = {
-  "GBP-NGN": 2048.62,
-  "USD-NGN": 1582.4,
-  "EUR-NGN": 1730.18,
-  "GBP-USD": 1.2748,
-  "GBP-EUR": 1.1682,
-  "USD-EUR": 0.9164,
-};
-export const providerSeed = [
-  {
-    id: "lemfi",
-    name: "LemFi",
-    mark: "L",
-    className: "lemfi",
-    rate: 2048.62,
-    fee: 2.8,
-    time: "Usually seconds",
-  },
-  {
-    id: "sendwave",
-    name: "Sendwave",
-    mark: "S",
-    className: "sendwave",
-    rate: 2042.15,
-    fee: 0,
-    time: "Usually minutes",
-  },
-  {
-    id: "remitly",
-    name: "Remitly",
-    mark: "R",
-    className: "remitly",
-    rate: 2036.8,
-    fee: 1.5,
-    time: "Same day",
-  },
-  {
-    id: "pesa",
-    name: "Pesa",
-    mark: "P",
-    className: "pesa",
-    rate: 2028.35,
-    fee: 2,
-    time: "Same day",
-  },
-];
-export const trendPoints = [
-  35, 39, 36, 43, 41, 49, 46, 54, 51, 58, 54, 63, 59, 68, 64, 73, 70, 78, 75,
-  84, 80, 89, 86, 95,
-];
 export const currencyList = Object.keys(currencies) as Currency[];
-
-export function getRate(from: Currency, to: Currency): number | null {
-  if (from === to) return 1;
-  const direct = pairRates[`${from}-${to}`];
-  if (direct) return direct;
-  const inverse = pairRates[`${to}-${from}`];
-  if (inverse) return 1 / inverse;
-  const toNgn = pairRates[`${from}-NGN`];
-  const targetToNgn = pairRates[`${to}-NGN`];
-  if (toNgn && targetToNgn) return toNgn / targetToNgn;
-  return null;
-}
 
 export function money(value: number, currency: Currency) {
   try {

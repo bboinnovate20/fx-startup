@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { money, providerSeed, type Currency } from "./data/fx-data";
+import { money, type Currency } from "./data/fx-data";
+import type { PlatformRow } from "../lib/use-fx-market";
 import type { ProviderInfo } from "./data/providers";
 import { Converter } from "./converter";
 
@@ -122,27 +123,19 @@ function AnimatedHeroPhrase() {
 
 function ProviderRateCards({
   to,
-  amount,
-  rate,
-  providers,
+  quotes,
+  bestId,
 }: {
   to: Currency;
-  amount: string;
-  rate: number | null;
-  providers: ProviderInfo[];
+  quotes: PlatformRow[];
+  bestId: string | null;
 }) {
   const prefersReducedMotion = useReducedMotion();
-  if (!rate) return null;
-
-  const amountValue = Number(amount.replaceAll(",", "")) || 500;
-  const scale = rate / providerSeed[0].rate;
-  const top3 = providerSeed
-    .map((seed) => {
-      const info = providers.find((p) => p.id === seed.id);
-      return { ...seed, logo: info?.logo, payout: amountValue * seed.rate * scale };
-    })
-    .sort((a, b) => b.payout - a.payout)
-    .slice(0, 3);
+  const top3 = quotes.filter((provider): provider is PlatformRow & { payout: number } =>
+    provider.available && provider.payout != null,
+  ).slice(0, 3);
+  if (top3.length === 0) return null;
+  const highlighted = top3.some((provider) => provider.id === bestId) ? bestId : top3[0].id;
 
   return (
     <motion.div
@@ -166,25 +159,41 @@ function ProviderRateCards({
             }),
           }}
           className={`flex items-center gap-3 rounded-[14px] px-3.5 py-2.5 ${
-            i === 0 ? "bg-primary" : "bg-[#f5f4fa]"
+            provider.id === highlighted ? "bg-primary" : "bg-[#f5f4fa]"
           }`}
         >
           <div className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full border border-black/5 bg-white">
             {provider.logo ? (
-              <img src={provider.logo} alt="" className="h-full w-full object-cover rounded-full" />
+              <img
+                src={provider.logo}
+                alt=""
+                className="h-full w-full object-cover rounded-full"
+                onError={(event) => {
+                  const image = event.currentTarget;
+                  const fallback = `/logos/${provider.id}.png`;
+                  if (!image.src.endsWith(fallback)) image.src = fallback;
+                }}
+              />
             ) : (
               <span className="text-[11px] font-bold text-primary">{provider.mark}</span>
             )}
           </div>
-          <span className={`flex-1 text-[13px] font-semibold ${i === 0 ? "text-white" : "text-[#25243a]"}`}>
-            {provider.name}
-            {i === 0 && (
-              <span className="ml-2 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-medium">
-                Best rate
+          <span className={`min-w-0 flex-1 text-[13px] font-semibold ${provider.id === highlighted ? "text-white" : "text-[#25243a]"}`}>
+            <span className="block truncate">
+              {provider.name}
+              {provider.id === highlighted && (
+                <span className="ml-2 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-medium">
+                  Best rate
+                </span>
+              )}
+            </span>
+            {provider.updatedAt ? (
+              <span suppressHydrationWarning className={`mt-0.5 block text-[10px] font-medium ${provider.id === highlighted ? "text-white/75" : "text-[#68768a]"}`}>
+                Updated {new Date(provider.updatedAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
-            )}
+            ) : null}
           </span>
-          <span className={`shrink-0 text-[13px] font-bold ${i === 0 ? "text-white" : "text-[#1a192d]"}`}>
+          <span className={`shrink-0 text-[13px] font-bold ${provider.id === highlighted ? "text-white" : "text-[#1a192d]"}`}>
             {money(provider.payout, to)}
           </span>
         </motion.div>
@@ -219,7 +228,9 @@ export function Hero({
   amount,
   setAmount,
   rate,
-  providers,
+  quotes,
+  bestId = null,
+  providers = [],
 }: {
   from: Currency;
   to: Currency;
@@ -228,19 +239,21 @@ export function Hero({
   amount: string;
   setAmount: (value: string) => void;
   rate: number | null;
-  providers: ProviderInfo[];
+  quotes: PlatformRow[];
+  bestId?: string | null;
+  providers?: ProviderInfo[];
 }) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
     <section
-      className="relative isolate overflow-hidden bg-white px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14 lg:pb-20 lg:pt-16"
+      className="relative isolate overflow-hidden bg-white px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14 lg:px-12 lg:pb-20 lg:pt-16 xl:px-20"
       id="rates"
     >
-      <div className="relative z-10 mx-auto max-w-[1080px]">
-        <div className="lg:grid lg:grid-cols-[1fr_460px] lg:items-center lg:gap-12 xl:grid-cols-[1fr_500px] xl:gap-16">
+      <div className="relative z-10 mx-auto w-full max-w-[1220px]">
+        <div className="lg:grid lg:grid-cols-[1fr_460px] lg:items-center lg:gap-16 xl:grid-cols-[1fr_500px] xl:gap-24">
           {/* Left column: headline + provider rate cards */}
-          <div className="mb-10 text-center lg:mb-0 lg:text-left">
+          <div className="mb-10 text-center lg:mb-0 lg:max-w-[560px] lg:text-left">
             <motion.span
               className="block font-display text-[14px] font-semibold uppercase tracking-wider text-primary sm:text-[16px]"
               initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
@@ -250,7 +263,7 @@ export function Hero({
               Smart currency exchange
             </motion.span>
 
-            <h1 className="relative mb-0 mt-4 text-[24px] font-semibold leading-[1.05] tracking-normal text-primary sm:text-[36px] lg:text-[48px] xl:text-[44px]">
+            <h1 className="relative mb-0 mt-4 text-[24px] font-bold leading-[1.05] tracking-tight text-primary sm:text-[36px] lg:text-[48px] xl:text-[44px]">
               <motion.span
                 className="block"
                 aria-hidden="true"
@@ -273,7 +286,7 @@ export function Hero({
             </motion.p>
 
             <div className="hidden lg:block">
-              <ProviderRateCards to={to} amount={amount} rate={rate} providers={providers} />
+              <ProviderRateCards to={to} quotes={quotes} bestId={bestId} />
             </div>
           </div>
 
@@ -291,7 +304,7 @@ export function Hero({
           <div className="mt-6">
             <MobileProviderTicker providers={providers} />
           </div>
-          <ProviderRateCards to={to} amount={amount} rate={rate} providers={providers} />
+          <ProviderRateCards to={to} quotes={quotes} bestId={bestId} />
         </div>
       </div>
     </section>

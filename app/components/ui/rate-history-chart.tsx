@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { number, type Currency } from "../data/fx-data";
+import type { HistoryPoint } from "../../lib/use-fx-market";
 import { CurrencyPicker } from "../currency-picker";
 import { ArrowIcon } from "./ArrowIcon";
 import {
@@ -24,43 +25,23 @@ import {
 type HistoryPeriod = "day" | "week";
 export type RateHistoryPeriod = HistoryPeriod;
 const ease = [0.22, 1, 0.36, 1] as const;
-const periods: { id: HistoryPeriod; label: string; days: number; movement: number }[] = [
-  { id: "day", label: "24 hours", days: 1, movement: 0.002 },
-  { id: "week", label: "1 week", days: 7, movement: 0.004 },
+const periods: { id: HistoryPeriod; label: string }[] = [
+  { id: "day", label: "24 hours" },
+  { id: "week", label: "1 week" },
 ];
-
-type RatePoint = { time: string; rate: number };
-
-function makeRateHistory(rate: number, period: HistoryPeriod, days: number) {
-  const pointCount = 64;
-  const movement = periods.find((item) => item.id === period)!.movement;
-  const frequency = period === "day" ? 2.8 : 1.7;
-  const wave = (index: number) => {
-    const t = index / (pointCount - 1);
-    return Math.sin(t * Math.PI * 5.3 * frequency) * 0.42
-      + Math.sin(t * Math.PI * 13.7 * frequency + 0.8) * 0.2
-      + Math.sin(t * Math.PI * 29.1 * frequency + 2.2) * 0.11;
-  };
-  const endWave = wave(pointCount - 1);
-  const end = Date.now();
-  const duration = days * 24 * 60 * 60 * 1000;
-
-  return Array.from({ length: pointCount }, (_, index): RatePoint => ({
-    time: new Date(end - duration + (duration * index) / (pointCount - 1)).toISOString(),
-    rate: rate * (1 + (wave(index) - endWave) * movement),
-  }));
-}
 
 function shortDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(value));
 }
 
-export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, onPeriodChange, compact = false }: {
+export function RateHistoryChart({ from, to, setFrom, setTo, rate, points, sourceName = null, periodValue, onPeriodChange, compact = false }: {
   from: Currency;
   to: Currency;
   setFrom: (value: Currency) => void;
   setTo: (value: Currency) => void;
   rate: number;
+  points: HistoryPoint[];
+  sourceName?: string | null;
   periodValue?: RateHistoryPeriod;
   onPeriodChange?: (period: RateHistoryPeriod) => void;
   compact?: boolean;
@@ -100,11 +81,14 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
     onPeriodChange?.(nextPeriod);
   };
   const selectedPeriod = periods.find((item) => item.id === period)!;
-  const data = makeRateHistory(rate, period, selectedPeriod.days);
+  const data = points;
   const digits = rate < 10 ? 4 : 2;
   const startLabel = period === "day" ? "24 hours ago" : shortDate(data[0].time);
   const endLabel = period === "day" ? "Now" : shortDate(data[data.length - 1].time);
-  const yPadding = rate * selectedPeriod.movement * 0.5;
+  const rates = data.map((point) => point.rate);
+  const low = Math.min(...rates);
+  const high = Math.max(...rates);
+  const yPadding = Math.max((high - low) * 0.2, rate * 0.002);
   const chartConfig = {
     rate: {
       label: `${to} per ${from}`,
@@ -128,10 +112,10 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
         <div className="min-w-0">
           <CardTitle className={`m-0 leading-tight tracking-[-0.04em] ${compact ? "text-[18px]" : "text-[26px] max-[700px]:text-[23px]"}`}>Rate history</CardTitle>
           <CardDescription className="mb-0 mt-1 text-[12px] text-[#64748b]">{from} to {to}</CardDescription>
-          <div className={`${compact ? "mt-2 max-w-[300px] [&_button]:!min-h-10" : "mt-3 max-w-[440px]"} flex w-full items-center gap-2 [&_.currency-picker]:min-w-0 [&_.currency-picker]:flex-1 [&_.currency-picker]:bg-[#f1f3f6] [&_.currency-picker]:text-[#64748b]`}>
-            <CurrencyPicker value={from} label="Rate history source currency" onChange={setFrom} variant="pair" />
+          <div className={`relative ${compact ? "mt-2 max-w-[300px] [&_button]:!min-h-10" : "mt-3 max-w-[440px]"} flex w-full items-center gap-2 [&_.currency-picker]:min-w-0 [&_.currency-picker]:flex-1 [&_.currency-picker]:bg-[#f1f3f6] [&_.currency-picker]:text-[#64748b]`}>
+            <CurrencyPicker value={from} label="Rate history source currency" onChange={setFrom} variant="pair" anchor="row" />
             <ArrowIcon className="h-3 w-3 shrink-0 text-[#9aa5b4]" />
-            <CurrencyPicker value={to} label="Rate history target currency" onChange={setTo} variant="pair" />
+            <CurrencyPicker value={to} label="Rate history target currency" onChange={setTo} variant="pair" anchor="row" />
           </div>
         </div>
         <div className="flex items-center gap-2" role="group" aria-label="Rate history period">
@@ -177,7 +161,7 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
             <YAxis
               dataKey="rate"
               type="number"
-              domain={[rate - yPadding, rate + yPadding]}
+              domain={[low - yPadding, high + yPadding]}
               orientation="right"
               tickLine={false}
               axisLine={false}
@@ -208,7 +192,7 @@ export function RateHistoryChart({ from, to, setFrom, setTo, rate, periodValue, 
       </CardContent>
       <CardFooter className={`flex flex-wrap items-center justify-between gap-2 border-t border-[#e5e7e4] text-[11px] text-[#667064] ${compact ? "mt-2 px-4 py-3" : "mt-3 px-7 pb-5 pt-4 max-[700px]:px-1"}`}>
         <span className="font-medium text-primary">1 {from} = {number(rate, digits)} {to}</span>
-        <span>Illustrative history · {selectedPeriod.label}</span>
+        <span>{sourceName ?? "Reference history"} · {selectedPeriod.label}</span>
       </CardFooter>
     </Card>
     </motion.div>

@@ -16,7 +16,9 @@
   --success: #21b77b;
   --red: #dc2626;
   --amber: #f59e0b;
-  --font-body: Inter, "Helvetica Neue", Arial, sans-serif;
+  /* Body: Inter, loaded by next/font (see app/layout.tsx), behind the system
+     stack for glyphs the face does not carry. */
+  --font-body: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
 }
 
 @theme inline {
@@ -34,7 +36,10 @@
   --color-negative: var(--red);
   --color-warning: var(--amber);
   --font-sans: var(--font-body);
-  --font-display: var(--font-boing);
+  /* Brand/display: Google Sans first, Boing behind it, then the system stack
+     for glyphs neither face carries (e.g. ₦). */
+  --font-display: var(--font-google-sans), var(--font-boing), ui-sans-serif, system-ui,
+    sans-serif;
 }
 
 @layer base {

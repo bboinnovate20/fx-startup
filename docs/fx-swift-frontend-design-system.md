@@ -35,7 +35,9 @@ Do not infer positive or negative movement when the direction is unknown. Status
 
 ### Typography
 
-Use the supplied local Boing font for display headings and prominent section titles. The project contains these weights under `public/fonts/`: Thin, Light, Regular, Medium, Semibold, Bold, and Semibold Italic. Use Inter for body copy, form labels, metadata, tables, and controls, with a system sans-serif fallback. Keep numeric values legible and aligned consistently, especially in rate comparisons and conversion fields.
+**Display and brand.** Use Google Sans for headings, brand marks and prominent section titles — it is the display face (`--font-display`, loaded through `next/font/google` so it self-hosts at build time). The supplied local Boing family sits behind it as the fallback, with the weights registered from `public/fonts/` (Regular, Medium, Semibold, Bold; Thin, Light and Semibold Italic also ship in that folder), and a system sans-serif behind both for glyphs neither face carries (for example ₦).
+
+**Body.** Use Inter for body copy, form labels, metadata, tables and controls (`--font-body`, feeding `--font-sans`), loaded through `next/font/google` with Helvetica Neue and Arial as the system fallback. Keep numeric values legible and aligned consistently, especially in rate comparisons and conversion fields.
 
 ### Shape, spacing, and elevation
 

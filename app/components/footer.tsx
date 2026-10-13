@@ -22,7 +22,7 @@ export function Footer() {
           <a href="#about">Privacy</a>
           <a href="#about">Terms</a>
         </nav>
-        <small>© 2026 PAS FX. Sample figures shown for preview.</small>
+        <small>© 2026 PAS FX. Live quotes come from connected providers.</small>
       </div>
     </footer>
   );

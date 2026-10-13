@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react";
 import type { Currency } from "./data/fx-data";
-import { getRate } from "./data/fx-data";
 import type { ProviderInfo } from "./data/providers";
+import { useFxMarket } from "../lib/use-fx-market";
+import type { RateHistoryPeriod } from "./ui/rate-history-chart";
 import { Header } from "./header";
 import { Hero } from "./hero";
-import { MarketStrip } from "./market-strip";
 import { ProviderComparison } from "./provider-comparison";
 import { ProviderDirectory } from "./provider-directory";
 import { TrendSection } from "./trend-section";
 import { AlertsSection } from "./alerts-section";
 import { Footer } from "./footer";
-import { ArrowIcon } from "./ui/ArrowIcon";
 
 export default function FxDashboard({
   initialValues,
@@ -22,8 +21,9 @@ export default function FxDashboard({
   const [from, setFrom] = useState<Currency>(initialValues?.from ?? "GBP");
   const [to, setTo] = useState<Currency>(initialValues?.to ?? "NGN");
   const [amount, setAmount] = useState(initialValues?.amount ?? "500");
+  const [historyPeriod, setHistoryPeriod] = useState<RateHistoryPeriod>("week");
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
-  const rate = getRate(from, to);
+  const market = useFxMarket(from, to, amount, historyPeriod);
 
   useEffect(() => {
     let active = true;
@@ -41,6 +41,10 @@ export default function FxDashboard({
     };
   }, []);
 
+  const quotedProviders = providers.filter((provider) =>
+    market.quotes.some((quote) => quote.available && quote.id === provider.id),
+  );
+
   return (
     <>
       <div className={`overflow-hidden`} id="top">
@@ -50,8 +54,10 @@ export default function FxDashboard({
           {/* <MarketStrip /> */}
           <Hero
             {...{ from, to, setFrom, setTo, amount, setAmount }}
-            rate={rate}
-            providers={providers}
+            rate={market.rate}
+            quotes={market.quotes}
+            bestId={market.bestId}
+            providers={quotedProviders}
           />
           <div
             className={`max-w-[1000px] m-[auto] p-[55px_18px_67px] max-[700px]:p-[39px_15px_47px]`}
@@ -64,15 +70,28 @@ export default function FxDashboard({
                 to={to}
                 amount={amount}
                 setAmount={setAmount}
-                rate={rate}
-                providers={providers}
+                rate={market.rate}
+                quotes={market.quotes}
+                bestId={market.bestId}
+                status={market.status}
+                message={market.message}
               />
             </div>
             <div className="px-6 pt-6 max-[700px]:pt-10">
-              <ProviderDirectory providers={providers} />
+              <ProviderDirectory providers={quotedProviders} />
             </div>
             <div className="px-6 pt-6 max-[700px]:px-0 max-[700px]:pt-10">
-              <TrendSection from={from} to={to} setFrom={setFrom} setTo={setTo} rate={rate} />
+              <TrendSection
+                from={from}
+                to={to}
+                setFrom={setFrom}
+                setTo={setTo}
+                rate={market.rate}
+                history={market.history}
+                historySource={market.historySource}
+                historyPeriod={historyPeriod}
+                setHistoryPeriod={setHistoryPeriod}
+              />
             </div>
             <div className="px-6 pt-6 max-[700px]:px-0 max-[700px]:pt-10">
               <AlertsSection {...{ from, to, setFrom, setTo }} />

@@ -6,8 +6,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertForm } from "./alert-form";
 import { ChatAttachment, ChatSkeletonCard, RateChatCard } from "./ask-chat-cards";
 import Loader from "./loading-icon";
-import { currencyList, getRate, number, type Currency } from "./data/fx-data";
-import type { ProviderInfo } from "./data/providers";
+import { currencyList, number, type Currency } from "./data/fx-data";
+import { askFx } from "../lib/fx-api";
+import { useFxMarket } from "../lib/use-fx-market";
 import { ProviderComparison } from "./provider-comparison";
 import { TrendSection } from "./trend-section";
 import type { RateHistoryPeriod } from "./ui/rate-history-chart";
@@ -19,16 +20,18 @@ type Status = "idle" | "thinking";
 const suggestions = ["What about EUR?", "Show 24 hours", "Cheapest provider?"];
 const panels: Panel[] = ["rate", "chart", "providers", "alert"];
 const sessionKey = "fx-ask-session-v1";
-// Simulated latency until /api/ask exists; keeps the loading states exercised.
-const replyDelay = 850;
 const workspaceDelay = 650;
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const enter: Transition = { duration: 0.32, ease };
 const reorder: Transition = { type: "spring", bounce: 0, visualDuration: 0.45 };
 
-function openingReply(from: Currency, to: Currency) {
-  return `I’ve opened the ${from} to ${to} rate, provider comparison, and illustrative rate history. Rates and fees may vary.`;
+function focusFromApi(focus: string | undefined): Panel | null {
+  if (focus === "chart") return "chart";
+  if (focus === "providers") return "providers";
+  if (focus === "alert") return "alert";
+  if (focus === "rate" || focus === "converter") return "rate";
+  return null;
 }
 
 function focusFor(question: string): Panel {
@@ -99,7 +102,6 @@ export default function AskExperience({
   const [historyPeriod, setHistoryPeriod] = useState<RateHistoryPeriod>("week");
   const [focus, setFocus] = useState<Panel>(focusFor(initialQuestion));
   const [question, setQuestion] = useState("");
-  const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [messages, setMessages] = useState<Message[]>([{ id: 1, role: "user", text: initialQuestion }]);
   const [status, setStatus] = useState<Status>("thinking");
   const [workspaceReady, setWorkspaceReady] = useState(false);
@@ -107,27 +109,19 @@ export default function AskExperience({
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const amountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const replyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rate = getRate(from, to);
+  const market = useFxMarket(from, to, amount, historyPeriod);
+  const rate = market.rate;
   const contextKey = `${initialFrom}:${initialTo}:${initialAmount}:${initialQuestion}`;
 
   useEffect(() => {
-    let active = true;
-    fetch("/data/providers.json")
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load providers");
-        return response.json() as Promise<ProviderInfo[]>;
-      })
-      .then((data) => {
-        if (active && Array.isArray(data)) setProviders(data);
-      })
-      .catch(() => {});
     return () => {
-      active = false;
       if (amountTimerRef.current) clearTimeout(amountTimerRef.current);
     };
   }, []);
 
+  // Session restore writes state after mount so the server HTML and the first
+  // client render stay the same.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     let restored = false;
     try {
@@ -159,25 +153,43 @@ export default function AskExperience({
     setSessionRestored(true);
 
     const workspaceTimer = setTimeout(() => setWorkspaceReady(true), restored ? 200 : workspaceDelay);
+    const controller = new AbortController();
     if (restored) {
       setStatus("idle");
     } else {
-      const openingFocus = focusFor(initialQuestion);
-      replyTimerRef.current = setTimeout(() => {
+      void askFx({
+        messages: [{ role: "user", content: initialQuestion }],
+        pair: { from: initialFrom, to: initialTo },
+        amount: initialAmount,
+        range: "1w",
+      }, controller.signal).then((result) => {
+        const panel = focusFromApi(result.view?.focus) ?? focusFor(initialQuestion);
+        if (result.view?.range === "1d") setHistoryPeriod("day");
+        setFocus(panel);
         setMessages((current) => [...current, {
           id: Date.now(),
           role: "assistant",
-          text: openingReply(initialFrom, initialTo),
-          panel: openingFocus,
+          text: result.response.text,
+          panel,
         }]);
         setStatus("idle");
-      }, replyDelay);
+      }).catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setMessages((current) => [...current, {
+          id: Date.now(),
+          role: "assistant",
+          text: error instanceof Error ? error.message : "The assistant is not available yet.",
+          panel: focusFor(initialQuestion),
+        }]);
+        setStatus("idle");
+      });
     }
     return () => {
       clearTimeout(workspaceTimer);
-      if (replyTimerRef.current) clearTimeout(replyTimerRef.current);
+      controller.abort();
     };
-  }, [contextKey, initialFrom, initialQuestion, initialTo]);
+  }, [contextKey, initialFrom, initialAmount, initialQuestion, initialTo]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!sessionRestored) return;
@@ -221,46 +233,45 @@ export default function AskExperience({
     appendMessage("system", `Rate history changed to ${period === "day" ? "24 hours" : "1 week"}.`);
   }
 
-  function respond(text: string) {
-    let nextFocus: Panel = "rate";
-    let response = openingReply(from, to);
-    if (/24\s*hours?|1\s*day/i.test(text)) {
-      setHistoryPeriod("day");
-      nextFocus = "chart";
-      response = "The rate history panel is now showing the 24-hour range. The chart is illustrative.";
-    } else if (/7\s*days?|1\s*week|week|trend|history/i.test(text)) {
-      setHistoryPeriod("week");
-      nextFocus = "chart";
-      response = "The rate history panel is showing the one-week range. The chart is illustrative.";
-    } else if (/cheapest|provider|compare/i.test(text)) {
-      nextFocus = "providers";
-      response = "I’ve highlighted the provider comparison. The displayed rates and fees are sample estimates.";
-    } else if (/alert|target/i.test(text)) {
-      nextFocus = "alert";
-      response = "I’ve highlighted the alert form. It won’t create an alert until you submit the form.";
-    } else if (/\bEUR\b/i.test(text)) {
-      const nextFrom = to === "EUR" ? from : "EUR";
-      const nextTo = to === "EUR" ? "NGN" : to;
-      setFrom(nextFrom);
-      setTo(nextTo);
-      nextFocus = "chart";
-      response = `I’ve updated the workspace to ${nextFrom} to ${nextTo}. Rates and chart history are indicative.`;
-    }
-    setFocus(nextFocus);
-    appendMessage("assistant", response, nextFocus);
-  }
-
   function submitQuestion(value: string) {
     const text = value.trim();
     if (!text || status === "thinking") return;
+    const history = messages.flatMap((message) =>
+      message.role === "user" || message.role === "assistant"
+        ? [{ role: message.role, content: message.text }]
+        : [],
+    );
     appendMessage("user", text);
     setQuestion("");
     setStatus("thinking");
-    replyTimerRef.current = setTimeout(() => {
-      respond(text);
+    void askFx({
+      messages: [...history, { role: "user", content: text }],
+      pair: { from, to },
+      amount: amount.replaceAll(",", ""),
+      range: historyPeriod === "day" ? "1d" : "1w",
+    }).then((result) => {
+      const panel = focusFromApi(result.view?.focus) ?? "rate";
+      if (result.view?.pair.from && currencyList.includes(result.view.pair.from as Currency)) {
+        setFrom(result.view.pair.from as Currency);
+      }
+      if (result.view?.pair.to && currencyList.includes(result.view.pair.to as Currency)) {
+        setTo(result.view.pair.to as Currency);
+      }
+      if (result.view?.amount) setAmount(result.view.amount);
+      if (result.view?.range === "1d") setHistoryPeriod("day");
+      if (result.view?.range === "1w") setHistoryPeriod("week");
+      setFocus(panel);
+      appendMessage("assistant", result.response.text, panel);
       setStatus("idle");
       inputRef.current?.focus();
-    }, replyDelay);
+    }).catch((error: unknown) => {
+      appendMessage(
+        "assistant",
+        error instanceof Error ? error.message : "The assistant is not available yet.",
+      );
+      setStatus("idle");
+      inputRef.current?.focus();
+    });
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -290,6 +301,8 @@ export default function AskExperience({
             setFrom={setFrom}
             setTo={setTo}
             rate={rate}
+            history={market.history}
+            historySource={market.historySource}
             historyPeriod={historyPeriod}
             setHistoryPeriod={updateHistoryPeriod}
             compact
@@ -302,7 +315,10 @@ export default function AskExperience({
             amount={amount}
             setAmount={updateAmount}
             rate={rate}
-            providers={providers}
+            quotes={market.quotes}
+            bestId={market.bestId}
+            status={market.status}
+            message={market.message}
             compact
             showInput={false}
           />
@@ -378,6 +394,8 @@ export default function AskExperience({
                             setFrom={setFrom}
                             setTo={setTo}
                             rate={rate}
+                            history={market.history}
+                            historySource={market.historySource}
                             historyPeriod={historyPeriod}
                             setHistoryPeriod={updateHistoryPeriod}
                             compact
@@ -392,7 +410,10 @@ export default function AskExperience({
                             amount={amount}
                             setAmount={updateAmount}
                             rate={rate}
-                            providers={providers}
+                            quotes={market.quotes}
+                            bestId={market.bestId}
+                            status={market.status}
+                            message={market.message}
                             compact
                             showInput={false}
                           />

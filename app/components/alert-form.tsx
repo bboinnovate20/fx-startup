@@ -54,7 +54,7 @@ export function AlertForm({
           Currency pair
         </label>
         <div
-          className={`mt-2 flex w-full min-w-0 items-center gap-1 sm:gap-[10px] [&_.currency-picker]:min-w-0 [&_.currency-picker]:flex-1 [&_.currency-picker]:border-0 [&_.currency-picker]:bg-white [&_.currency-picker]:h-14 [&_.currency-picker]:max-w-full
+          className={`relative mt-2 flex w-full min-w-0 items-center gap-1 sm:gap-[10px] [&_.currency-picker]:min-w-0 [&_.currency-picker]:flex-1 [&_.currency-picker]:border-0 [&_.currency-picker]:bg-white [&_.currency-picker]:h-14 [&_.currency-picker]:max-w-full
             [&_.currency-picker>button]:min-w-0 [&_.currency-picker>button]:gap-1.5 [&_.currency-picker>button]:px-1.5 sm:[&_.currency-picker>button]:px-2 [&_.currency-picker>button]:text-[14px] [&_.currency-picker>button>span]:min-w-0 [&_.currency-picker>button>span]:overflow-hidden [&_.currency-picker>button>span>span]:max-w-full [&_.currency-picker>button>img]:h-6 [&_.currency-picker>button>img]:w-6 sm:[&_.currency-picker>button>img]:h-8 sm:[&_.currency-picker>button>img]:w-8 [&>_span]:text-[#9aa5b4] [&>_span]:text-[11px]`}
         >
           <CurrencyPicker
@@ -62,6 +62,7 @@ export function AlertForm({
             label="Alert source currency"
             onChange={setFrom}
             variant="pair"
+            anchor="row"
           />
           <ArrowIcon className="h-3 w-3 shrink-0 text-[#9aa5b4]" />
           <CurrencyPicker
@@ -69,6 +70,7 @@ export function AlertForm({
             label="Alert target currency"
             onChange={setTo}
             variant="pair"
+            anchor="row"
           />
         </div>
         <fieldset
