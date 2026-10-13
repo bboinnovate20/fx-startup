@@ -117,7 +117,7 @@ export function useFxMarket(
                 payout ??
                 (quoteRate != null && parsedAmount ? quoteRate * Number(parsedAmount) : null),
               speed: quote.speed,
-              updatedAt: quote.lastUpdated ?? null,
+              updatedAt: quote.lastUpdated ?? quote.retrievedAt ?? null,
               available: true,
             });
           }

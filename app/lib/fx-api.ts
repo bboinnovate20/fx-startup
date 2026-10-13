@@ -34,6 +34,7 @@ export type FxQuote = {
   freshness: "fresh" | "stale";
   logo?: string | null;
   lastUpdated?: string | null;
+  retrievedAt?: string | null;
 };
 
 export type FxComparison = {

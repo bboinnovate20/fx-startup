@@ -20,7 +20,7 @@ export default function FxDashboard({
 }) {
   const [from, setFrom] = useState<Currency>(initialValues?.from ?? "GBP");
   const [to, setTo] = useState<Currency>(initialValues?.to ?? "NGN");
-  const [amount, setAmount] = useState(initialValues?.amount ?? "500");
+  const [amount, setAmount] = useState(initialValues?.amount ?? "10");
   const [historyPeriod, setHistoryPeriod] = useState<RateHistoryPeriod>("week");
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const market = useFxMarket(from, to, amount, historyPeriod);

@@ -12,7 +12,7 @@ export function FxAsk({ from, to, amount }: { from: Currency; to: Currency; amou
 
   function submitQuestion(value: string) {
     const text = value.trim() || `What is the ${from} to ${to} rate and trend?`;
-    const params = new URLSearchParams({ q: text, from, to, amount: amount.replaceAll(",", "") || "500" });
+    const params = new URLSearchParams({ q: text, from, to, amount: amount.replaceAll(",", "") || "10" });
     router.push(`/ask?${params.toString()}`);
   }
 

@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   return (
     <FxDashboard
       initialValues={{
-        amount: amount?.replace(/[^\d.,]/g, "") || "500",
+        amount: amount?.replace(/[^\d.,]/g, "") || "10",
         from: isCurrency(source) ? source : "GBP",
         to: isCurrency(target) ? target : "NGN",
       }}

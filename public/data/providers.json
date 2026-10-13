@@ -42,6 +42,12 @@
     "url": "https://lemfi.com"
   },
   {
+    "id": "wise",
+    "name": "Wise",
+    "logo": "/logos/wise.svg",
+    "url": "https://wise.com"
+  },
+  {
     "id": "sendwave",
     "name": "Sendwave",
     "logo": "/logos/sendwave.png",
