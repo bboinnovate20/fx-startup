@@ -48,17 +48,18 @@ export default function FxDashboard({
   return (
     <>
       <div className={`overflow-hidden`} id="top">
-        <Header />
-
-        <main>
-          {/* <MarketStrip /> */}
+        <div className="night-sky">
+          <Header blend />
           <Hero
             {...{ from, to, setFrom, setTo, amount, setAmount }}
             rate={market.rate}
             quotes={market.quotes}
             bestId={market.bestId}
+            status={market.status}
             providers={quotedProviders}
           />
+        </div>
+        <main>
           <div
             className={`max-w-[1000px] m-[auto] p-[55px_18px_67px] max-[700px]:p-[39px_15px_47px]`}
           >

@@ -92,6 +92,52 @@
   }
 }
 
+.night-sky {
+  background-color: #070b16;
+  background-image:
+    radial-gradient(ellipse 80% 55% at 50% 38%, rgb(99 72 230 / 0.5), transparent 68%),
+    radial-gradient(ellipse 46% 40% at 88% 18%, rgb(37 99 235 / 0.42), transparent 70%),
+    radial-gradient(ellipse 90% 60% at 50% 100%, rgb(76 48 200 / 0.55), transparent 60%),
+    linear-gradient(180deg, #05070f 0%, #10183a 55%, #241a62 100%);
+}
+
+.glass-shimmer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: rgb(255 255 255 / 0.62);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.glass-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 18%,
+    rgb(255 255 255 / 0.9) 50%,
+    transparent 82%
+  );
+  transform: translateX(-100%);
+  animation: glass-sheen 1.8s ease-in-out infinite;
+}
+
+@keyframes glass-sheen {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-shimmer::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 .currency-rail {
   display: none;
 }

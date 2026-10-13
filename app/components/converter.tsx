@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { MarketStatus } from "../lib/use-fx-market";
 import { CurrencyPicker } from "./currency-picker";
 import { currencies, number, type Currency } from "./data/fx-data";
 import { FxAsk } from "./fx-ask";
@@ -11,6 +12,7 @@ export function Converter({
   amount,
   setAmount,
   rate,
+  status = "ready",
   showAsk = true,
   compact = false,
 }: {
@@ -21,9 +23,11 @@ export function Converter({
   amount: string;
   setAmount: (value: string) => void;
   rate: number | null;
+  status?: MarketStatus;
   showAsk?: boolean;
   compact?: boolean;
 }) {
+  const loading = status === "loading";
   const [editingTarget, setEditingTarget] = useState(false);
   const [targetDraft, setTargetDraft] = useState("");
   const receive = rate === null ? null : (Number(amount.replaceAll(",", "")) || 0) * rate;
@@ -93,25 +97,32 @@ export function Converter({
       </div>
 
       <label htmlFor="receive-amount" className="mb-1 block text-[12px] font-medium text-[#343b33]">Converted to</label>
-      <div className={`relative flex items-center gap-2 rounded-full border border-[#c5c9c4] pl-3 pr-2 focus-within:border-2 focus-within:border-navy sm:px-3.5 ${compact ? "min-h-12" : "min-h-[52px] sm:min-h-[64px]"}`}>
-        <input
-          id="receive-amount"
-          inputMode="decimal"
-          value={targetDraft}
-          disabled={rate === null}
-          onFocus={() => setEditingTarget(true)}
-          onBlur={() => setEditingTarget(false)}
-          onChange={(event) => {
-            const next = event.target.value.replace(/[^\d.,]/g, "");
-            setTargetDraft(next);
-            if (!next) setAmount("");
-            else if (rate !== null && rate > 0) {
-              setAmount(String(Number(next.replaceAll(",", "")) / rate));
-            }
-          }}
-          aria-label={`Converted amount in ${to}`}
-          className={`min-w-0 flex-1 border-0 bg-transparent p-0 font-display font-bold text-[#202421] outline-none disabled:cursor-not-allowed disabled:text-[#818980] ${compact ? "text-[18px]" : "text-[20px] sm:text-[24px]"}`}
-        />
+      <div
+        className={`relative flex items-center gap-2 rounded-full border border-[#c5c9c4] pl-3 pr-2 focus-within:border-2 focus-within:border-navy sm:px-3.5 ${compact ? "min-h-12" : "min-h-[52px] sm:min-h-[64px]"}`}
+        aria-busy={loading}
+      >
+        <div className="relative min-w-0 flex-1 self-stretch">
+          <input
+            id="receive-amount"
+            inputMode="decimal"
+            value={targetDraft}
+            disabled={rate === null}
+            onFocus={() => setEditingTarget(true)}
+            onBlur={() => setEditingTarget(false)}
+            onChange={(event) => {
+              const next = event.target.value.replace(/[^\d.,]/g, "");
+              setTargetDraft(next);
+              if (!next) setAmount("");
+              else if (rate !== null && rate > 0) {
+                setAmount(String(Number(next.replaceAll(",", "")) / rate));
+              }
+            }}
+            aria-label={`Converted amount in ${to}`}
+            style={loading ? { color: "transparent", caretColor: "transparent" } : undefined}
+            className={`h-full w-full min-w-0 border-0 bg-transparent p-0 font-display font-bold text-[#202421] outline-none disabled:cursor-not-allowed disabled:text-[#818980] ${compact ? "text-[18px]" : "text-[20px] sm:text-[24px]"}`}
+          />
+          {loading ? <span className="glass-shimmer rounded-full" aria-hidden="true" /> : null}
+        </div>
         <CurrencyPicker value={to} label="Target currency" onChange={setTo} variant="hero" align="right" anchor="row" />
       </div>
 

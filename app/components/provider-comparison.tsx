@@ -271,11 +271,17 @@ export function ProviderComparison({
                       </span>
                     </div>
                     ) : null}
-                    <div className={`shrink-0 text-right text-sm font-bold ${compact ? "sm:text-base" : "sm:text-lg"} ${isBest ? "text-white" : "text-navy"}`}>
-                      {provider.available && provider.payout != null ? money(provider.payout, to) : "Not available yet"}
-                      <div className={`mt-0.5 text-[10px] font-medium ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>
-                        {provider.available ? (provider.speed ?? "recipient gets") : "no live quote"}
+                    <div
+                      className={`relative shrink-0 rounded-[12px] text-right text-sm font-bold ${compact ? "sm:text-base" : "sm:text-lg"} ${isBest ? "text-white" : "text-navy"}`}
+                      aria-busy={status === "loading"}
+                    >
+                      <div className={status === "loading" ? "opacity-0" : undefined}>
+                        {provider.available && provider.payout != null ? money(provider.payout, to) : "Not available yet"}
+                        <div className={`mt-0.5 text-[10px] font-medium ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>
+                          {provider.available ? (provider.speed ?? "recipient gets") : "no live quote"}
+                        </div>
                       </div>
+                      {status === "loading" ? <span className="glass-shimmer" aria-hidden="true" /> : null}
                     </div>
                   </div>
                 </motion.article>

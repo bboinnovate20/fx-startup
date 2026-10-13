@@ -15,15 +15,17 @@ const links = [
 export function Header({
   askHref = "#fx-ask-question",
   startTarget = "converter",
+  blend = false,
 }: {
   askHref?: string;
   startTarget?: string;
+  blend?: boolean;
 } = {}) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
   return (
-    <header className="relative z-40 h-[74px] bg-[var(--black)] text-white max-[700px]:h-16">
+    <header className={`relative z-40 h-[74px] text-white max-[700px]:h-16 ${blend ? "bg-transparent" : "night-sky"}`}>
       <div className="relative mx-auto flex h-full w-full max-w-360 items-center gap-6 px-6 sm:px-8 lg:px-12 2xl:px-25 max-[700px]:gap-3 max-[700px]:px-4">
         <Brand />
 
@@ -31,7 +33,7 @@ export function Header({
           id="primary-navigation"
           aria-label="Main navigation"
           onKeyDown={(event) => event.key === "Escape" && close()}
-          className={`ml-8 flex items-center gap-3 max-[700px]:absolute max-[700px]:left-0 max-[700px]:right-0 max-[700px]:top-full max-[700px]:z-50 max-[700px]:ml-0 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-1 max-[700px]:border-t max-[700px]:border-white/15 max-[700px]:bg-[var(--black)] max-[700px]:p-3 max-[700px]:shadow-lg max-[700px]:[&_a]:w-full max-[700px]:[&_a_span]:w-full max-[700px]:[&_a_span]:justify-start ${open ? "max-[700px]:flex" : "max-[700px]:hidden"}`}
+          className={`ml-8 flex items-center gap-3 max-[700px]:absolute max-[700px]:left-0 max-[700px]:right-0 max-[700px]:top-full max-[700px]:z-50 max-[700px]:ml-0 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-1 max-[700px]:border-t max-[700px]:border-white/15 max-[700px]:bg-[#0b1024] max-[700px]:p-3 max-[700px]:shadow-lg max-[700px]:[&_a]:w-full max-[700px]:[&_a_span]:w-full max-[700px]:[&_a_span]:justify-start ${open ? "max-[700px]:flex" : "max-[700px]:hidden"}`}
         >
           {links.map(([label, href]) => (
             <a href={href} key={href} onClick={close}>

@@ -125,10 +125,12 @@ function ProviderRateCards({
   to,
   quotes,
   bestId,
+  loading = false,
 }: {
   to: Currency;
   quotes: PlatformRow[];
   bestId: string | null;
+  loading?: boolean;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const top3 = quotes.filter((provider): provider is PlatformRow & { payout: number } =>
@@ -193,8 +195,12 @@ function ProviderRateCards({
               </span>
             ) : null}
           </span>
-          <span className={`shrink-0 text-[13px] font-bold ${provider.id === highlighted ? "text-white" : "text-[#1a192d]"}`}>
-            {money(provider.payout, to)}
+          <span
+            className={`relative inline-block min-w-16 shrink-0 rounded-[10px] text-right text-[13px] font-bold ${provider.id === highlighted ? "text-white" : "text-[#1a192d]"}`}
+            aria-busy={loading}
+          >
+            <span className={loading ? "opacity-0" : undefined}>{money(provider.payout, to)}</span>
+            {loading ? <span className="glass-shimmer" aria-hidden="true" /> : null}
           </span>
         </motion.div>
       ))}
@@ -230,6 +236,7 @@ export function Hero({
   rate,
   quotes,
   bestId = null,
+  status = "ready",
   providers = [],
 }: {
   from: Currency;
@@ -241,13 +248,14 @@ export function Hero({
   rate: number | null;
   quotes: PlatformRow[];
   bestId?: string | null;
+  status?: "loading" | "ready" | "unavailable";
   providers?: ProviderInfo[];
 }) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
     <section
-      className="relative isolate overflow-hidden bg-white px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14 lg:px-12 lg:pb-20 lg:pt-16 xl:px-20"
+      className="relative isolate overflow-hidden bg-transparent px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14 lg:px-12 lg:pb-20 lg:pt-16 xl:px-20"
       id="rates"
     >
       <div className="relative z-10 mx-auto w-full max-w-[1220px]">
@@ -255,7 +263,7 @@ export function Hero({
           {/* Left column: headline + provider rate cards */}
           <div className="mb-10 text-center lg:mb-0 lg:max-w-[560px] lg:text-left">
             <motion.span
-              className="block font-display text-[14px] font-semibold uppercase tracking-wider text-primary sm:text-[16px]"
+              className="block font-display text-[14px] font-semibold uppercase tracking-wider text-[#c4b5fd] sm:text-[16px]"
               initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
@@ -263,7 +271,7 @@ export function Hero({
               Smart currency exchange
             </motion.span>
 
-            <h1 className="relative mb-0 mt-4 text-[24px] font-bold leading-[1.05] tracking-tight text-primary sm:text-[36px] lg:text-[48px] xl:text-[44px]">
+            <h1 className="relative mb-0 mt-4 text-[24px] font-bold leading-[1.05] tracking-tight text-white sm:text-[36px] lg:text-[48px] xl:text-[44px]">
               <motion.span
                 className="block"
                 aria-hidden="true"
@@ -277,7 +285,7 @@ export function Hero({
             </h1>
 
             <motion.p
-              className="mx-auto mt-4 max-w-[400px] font-display text-[14px] leading-[1.65] text-[#55536e] lg:mx-0"
+              className="mx-auto mt-4 max-w-[400px] font-display text-[14px] leading-[1.65] text-white/75 lg:mx-0"
               initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: "easeOut", delay: 0.16 }}
@@ -286,7 +294,7 @@ export function Hero({
             </motion.p>
 
             <div className="hidden lg:block">
-              <ProviderRateCards to={to} quotes={quotes} bestId={bestId} />
+              <ProviderRateCards to={to} quotes={quotes} bestId={bestId} loading={status === "loading"} />
             </div>
           </div>
 
@@ -296,7 +304,7 @@ export function Hero({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease, delay: 0.12 }}
           >
-            <Converter {...{ from, to, setFrom, setTo, amount, setAmount, rate }} />
+            <Converter {...{ from, to, setFrom, setTo, amount, setAmount, rate, status }} />
           </motion.div>
         </div>
 
@@ -304,7 +312,7 @@ export function Hero({
           <div className="mt-6">
             <MobileProviderTicker providers={providers} />
           </div>
-          <ProviderRateCards to={to} quotes={quotes} bestId={bestId} />
+          <ProviderRateCards to={to} quotes={quotes} bestId={bestId} loading={status === "loading"} />
         </div>
       </div>
     </section>
