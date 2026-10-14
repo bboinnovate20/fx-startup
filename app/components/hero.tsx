@@ -13,29 +13,29 @@ const heroPhrases = [
   "Catch the right moment.",
 ];
 
-function MobileProviderTicker({ providers }: { providers: ProviderInfo[] }) {
-  const prefersReducedMotion = useReducedMotion();
-
-  return (
-    <div className="provider-ticker mb-8 overflow-hidden lg:hidden" aria-hidden="true">
-      <motion.div
-        className="flex w-max"
-        animate={prefersReducedMotion ? undefined : { x: ["0%", "-50%"] }}
-        transition={{ duration: 28, ease: "linear", repeat: Infinity }}
-      >
-        {[0, 1].map((copy) => (
-          <div className="flex shrink-0 gap-2 pr-2" key={copy}>
-            {providers.map((provider) => (
-              <div className="currency-floater shrink-0" key={`${copy}-${provider.id}`}>
-                <img className="provider-floater-logo" src={provider.logo} alt="" />
-              </div>
-            ))}
-          </div>
-        ))}
-      </motion.div>
-    </div>
-  );
-}
+// function MobileProviderTicker({ providers }: { providers: ProviderInfo[] }) {
+//   const prefersReducedMotion = useReducedMotion();
+//
+//   return (
+//     <div className="provider-ticker mb-8 overflow-hidden lg:hidden" aria-hidden="true">
+//       <motion.div
+//         className="flex w-max"
+//         animate={prefersReducedMotion ? undefined : { x: ["0%", "-50%"] }}
+//         transition={{ duration: 28, ease: "linear", repeat: Infinity }}
+//       >
+//         {[0, 1].map((copy) => (
+//           <div className="flex shrink-0 gap-2 pr-2" key={copy}>
+//             {providers.map((provider) => (
+//               <div className="currency-floater shrink-0" key={`${copy}-${provider.id}`}>
+//                 <img className="provider-floater-logo" src={provider.logo} alt="" />
+//               </div>
+//             ))}
+//           </div>
+//         ))}
+//       </motion.div>
+//     </div>
+//   );
+// }
 
 function AnimatedHeroPhrase() {
   const prefersReducedMotion = useReducedMotion();
@@ -133,9 +133,15 @@ function ProviderRateCards({
   loading?: boolean;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const [introduced, setIntroduced] = useState(false);
   const top3 = quotes.filter((provider): provider is PlatformRow & { payout: number } =>
     provider.available && provider.payout != null,
   ).slice(0, 3);
+  useEffect(() => {
+    if (introduced || top3.length === 0) return;
+    const timeout = window.setTimeout(() => setIntroduced(true), 900);
+    return () => window.clearTimeout(timeout);
+  }, [introduced, top3.length]);
   if (top3.length === 0) return null;
   const highlighted = top3.some((provider) => provider.id === bestId) ? bestId : top3[0].id;
 
@@ -150,6 +156,7 @@ function ProviderRateCards({
         <motion.div
           key={provider.id}
           custom={i}
+          initial={introduced ? false : undefined}
           variants={{
             hidden: prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -16 },
             visible: (custom: number) => ({
@@ -237,7 +244,6 @@ export function Hero({
   quotes,
   bestId = null,
   status = "ready",
-  providers = [],
 }: {
   from: Currency;
   to: Currency;
@@ -309,9 +315,9 @@ export function Hero({
         </div>
 
         <div className="lg:hidden">
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <MobileProviderTicker providers={providers} />
-          </div>
+          </div> */}
           <ProviderRateCards to={to} quotes={quotes} bestId={bestId} loading={status === "loading"} />
         </div>
       </div>

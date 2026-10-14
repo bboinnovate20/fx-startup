@@ -69,11 +69,21 @@ export function money(value: number, currency: Currency) {
     return new Intl.NumberFormat("en-GB", {
       style: "currency",
       currency,
-      maximumFractionDigits: currencies[currency].digits,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(value);
   } catch {
-    return `${number(value, currencies[currency].digits)} ${currency}`;
+    return `${number(value, 2)} ${currency}`;
   }
+}
+
+export function roundAmount(value: number) {
+  if (!Number.isFinite(value)) return "";
+  return value.toLocaleString("en-GB", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: false,
+  });
 }
 
 export function number(value: number, digits = 2) {

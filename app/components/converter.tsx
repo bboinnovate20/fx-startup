@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { MarketStatus } from "../lib/use-fx-market";
 import { CurrencyPicker } from "./currency-picker";
-import { currencies, number, type Currency } from "./data/fx-data";
+import { number, roundAmount, type Currency } from "./data/fx-data";
 import { FxAsk } from "./fx-ask";
 
 export function Converter({
@@ -34,13 +34,21 @@ export function Converter({
 
   useEffect(() => {
     if (!editingTarget) {
-      setTargetDraft(receive === null ? "" : number(receive, currencies[to].digits));
+      setTargetDraft(receive === null ? "" : number(receive, 2));
     }
-  }, [editingTarget, receive, to]);
+  }, [editingTarget, receive]);
+
+  function commitAmount(raw: string) {
+    const parsed = Number(raw.replaceAll(",", ""));
+    if (!raw.trim() || !Number.isFinite(parsed)) return;
+    setAmount(roundAmount(parsed));
+  }
 
   function swapCurrencies() {
-    const nextAmount = targetDraft.replaceAll(",", "");
-    if (rate !== null && nextAmount) setAmount(nextAmount);
+    const parsed = Number(targetDraft.replaceAll(",", ""));
+    if (rate !== null && targetDraft.trim() && Number.isFinite(parsed)) {
+      setAmount(roundAmount(parsed));
+    }
     setEditingTarget(false);
     setFrom(to);
     setTo(from);
@@ -87,13 +95,14 @@ export function Converter({
           aria-label="Loading amount"
         />
       ) : (
-        <div className={`relative flex items-center rounded-full border border-[#c5c9c4] pl-3 pr-2 focus-within:border-2 focus-within:border-navy sm:px-3 ${compact ? "min-h-12" : "min-h-[47px] sm:min-h-[58px]"}`}>
+        <div className={`relative flex items-center rounded-full border border-[#c5c9c4] py-1.5 pl-3 pr-1.5 focus-within:border-2 focus-within:border-navy sm:px-3 sm:py-0 ${compact ? "min-h-12" : "min-h-[47px] sm:min-h-[58px]"}`}>
           <input
             id="send-amount"
             inputMode="decimal"
             placeholder="Enter Amount"
             value={amount}
             onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, ""))}
+            onBlur={() => commitAmount(amount)}
             aria-label={`Amount in ${from}`}
             className={`min-w-0 grow flex-1 border-0 bg-transparent p-0 font-display font-bold text-[#202421] outline-none ${compact ? "text-[18px]" : "text-[18px] sm:text-[22px]"}`}
           />
@@ -107,9 +116,16 @@ export function Converter({
           aria-label="Swap currencies"
           onClick={swapCurrencies}
           disabled={loading}
-          className={`grid place-items-center rounded-full ${compact ? "h-9 w-9" : "h-9 w-9 sm:h-10 sm:w-10"} border-0 bg-primary text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50`}
+          className={`grid place-items-center rounded-full ${compact ? "h-9 w-9" : "h-9 w-9 sm:h-10 sm:w-10"} border-0 bg-transparent transition hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50`}
         >
-          <img src="/icons/switch.svg" alt="" className="h-auto w-[18px] brightness-0 invert" />
+          <span
+            aria-hidden="true"
+            className="block h-3.5 w-4 bg-primary"
+            style={{
+              mask: "url(/icons/switch.svg) center / contain no-repeat",
+              WebkitMask: "url(/icons/switch.svg) center / contain no-repeat",
+            }}
+          />
         </button>
       </div>
 
@@ -121,7 +137,7 @@ export function Converter({
           aria-label="Loading converted amount"
         />
       ) : (
-        <div className={`relative flex items-center gap-2 rounded-full border border-[#c5c9c4] pl-3 pr-2 focus-within:border-2 focus-within:border-navy sm:px-3 ${compact ? "min-h-12" : "min-h-[47px] sm:min-h-[58px]"}`}>
+        <div className={`relative flex items-center gap-2 rounded-full border border-[#c5c9c4] py-1.5 pl-3 pr-1.5 focus-within:border-2 focus-within:border-navy sm:px-3 sm:py-0 ${compact ? "min-h-12" : "min-h-[47px] sm:min-h-[58px]"}`}>
           <div className="relative min-w-0 flex-1 self-stretch">
             <input
               id="receive-amount"
@@ -135,7 +151,8 @@ export function Converter({
                 setTargetDraft(next);
                 if (!next) setAmount("");
                 else if (rate !== null && rate > 0) {
-                  setAmount(String(Number(next.replaceAll(",", "")) / rate));
+                  const parsed = Number(next.replaceAll(",", ""));
+                  if (Number.isFinite(parsed)) setAmount(roundAmount(parsed / rate));
                 }
               }}
               aria-label={`Converted amount in ${to}`}

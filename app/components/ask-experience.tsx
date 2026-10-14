@@ -2,12 +2,16 @@
 
 import { AnimatePresence, MotionConfig, motion, type Transition } from "motion/react";
 import Link from "next/link";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AlertForm } from "./alert-form";
 import { ChatAttachment, ChatSkeletonCard, RateChatCard } from "./ask-chat-cards";
 import Loader from "./loading-icon";
 import { currencyList, number, type Currency } from "./data/fx-data";
+import directory from "../../public/data/providers.json";
+import { assignAskVariant, rememberAskVariant, type AskVariant } from "../lib/ask-variant";
 import { askFx } from "../lib/fx-api";
+import { recentConversations } from "../lib/recent-conversations";
+import { linkProviderNames, type ProviderLink } from "./linked-answer";
 import { useFxMarket } from "../lib/use-fx-market";
 import { ProviderComparison } from "./provider-comparison";
 import { TrendSection } from "./trend-section";
@@ -90,11 +94,13 @@ export default function AskExperience({
   initialTo,
   initialAmount,
   initialQuestion,
+  initialVariant = null,
 }: {
   initialFrom: Currency;
   initialTo: Currency;
   initialAmount: string;
   initialQuestion: string;
+  initialVariant?: AskVariant | null;
 }) {
   const [from, setFrom] = useState(initialFrom);
   const [to, setTo] = useState(initialTo);
@@ -106,18 +112,39 @@ export default function AskExperience({
   const [status, setStatus] = useState<Status>("thinking");
   const [workspaceReady, setWorkspaceReady] = useState(false);
   const [sessionRestored, setSessionRestored] = useState(false);
+  const [variant, setVariant] = useState<AskVariant | null>(initialVariant);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const amountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const market = useFxMarket(from, to, amount, historyPeriod);
   const rate = market.rate;
   const contextKey = `${initialFrom}:${initialTo}:${initialAmount}:${initialQuestion}`;
+  const providerLinks = useMemo<ProviderLink[]>(() => {
+    const byName = new Map<string, string>();
+    for (const provider of directory) {
+      if (provider.url) byName.set(provider.name, provider.url);
+    }
+    for (const quote of market.quotes) {
+      if (quote.website) byName.set(quote.name, quote.website);
+    }
+    return [...byName].map(([name, url]) => ({ name, url }));
+  }, [market.quotes]);
+  // The rate, chart, provider, and alert cards are turned off. The thread
+  // answers in text only. Restore the cards with `variant === "panels"`.
+  const textAnswer = true;
+  const showPanels = false;
 
   useEffect(() => {
     return () => {
       if (amountTimerRef.current) clearTimeout(amountTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const assigned = initialVariant ?? assignAskVariant();
+    setVariant(assigned);
+    rememberAskVariant(assigned);
+  }, [initialVariant]);
 
   // Session restore writes state after mount so the server HTML and the first
   // client render stay the same.
@@ -151,6 +178,7 @@ export default function AskExperience({
       // Storage may be unavailable or contain invalid data; start with the URL context.
     }
     setSessionRestored(true);
+    if (!variant) return;
 
     const workspaceTimer = setTimeout(() => setWorkspaceReady(true), restored ? 200 : workspaceDelay);
     const controller = new AbortController();
@@ -162,6 +190,7 @@ export default function AskExperience({
         pair: { from: initialFrom, to: initialTo },
         amount: initialAmount,
         range: "1w",
+        presentation: "panels",
       }, controller.signal).then((result) => {
         const panel = focusFromApi(result.view?.focus) ?? focusFor(initialQuestion);
         if (result.view?.range === "1d") setHistoryPeriod("day");
@@ -188,7 +217,7 @@ export default function AskExperience({
       clearTimeout(workspaceTimer);
       controller.abort();
     };
-  }, [contextKey, initialFrom, initialAmount, initialQuestion, initialTo]);
+  }, [contextKey, initialFrom, initialAmount, initialQuestion, initialTo, variant]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
@@ -245,10 +274,11 @@ export default function AskExperience({
     setQuestion("");
     setStatus("thinking");
     void askFx({
-      messages: [...history, { role: "user", content: text }],
+      messages: recentConversations(history, text),
       pair: { from, to },
       amount: amount.replaceAll(",", ""),
       range: historyPeriod === "day" ? "1d" : "1w",
+      presentation: "panels",
     }).then((result) => {
       const panel = focusFromApi(result.view?.focus) ?? "rate";
       if (result.view?.pair.from && currencyList.includes(result.view.pair.from as Currency)) {
@@ -334,8 +364,8 @@ export default function AskExperience({
 
   return (
     <MotionConfig reducedMotion="user">
-      <main className="grid min-h-screen bg-[#f7f6fc] font-display text-[#19182c] lg:h-[calc(100svh-74px)] lg:min-h-0 lg:grid-cols-[minmax(320px,36%)_minmax(0,1fr)] lg:overflow-hidden">
-        <section className="flex min-h-screen min-w-0 flex-col border-b border-[#e2def3] bg-white lg:h-full lg:min-h-0 lg:border-b-0 lg:border-r" aria-label="Ask FX Swift">
+      <main className={`bg-[#f7f6fc] font-display text-[#19182c] ${textAnswer ? "min-h-screen" : "grid min-h-screen lg:h-[calc(100svh-74px)] lg:min-h-0 lg:grid-cols-[minmax(320px,36%)_minmax(0,1fr)] lg:overflow-hidden"}`}>
+        <section className={`flex min-h-screen min-w-0 flex-col border-[#e2def3] bg-white ${textAnswer ? "mx-auto w-full max-w-2xl" : "border-b lg:h-full lg:min-h-0 lg:border-b-0 lg:border-r"}`} aria-label="Ask FX Swift">
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#eeedf4] px-4 sm:px-5">
             <Link href="/" className="text-[12px] font-medium text-[#686781] transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
               ← Back to rates
@@ -378,12 +408,12 @@ export default function AskExperience({
                         : "mr-auto rounded-bl-[5px] bg-[#f2f1f8] text-[#25243a]"
                     }`}
                   >
-                    {message.text}
+                    {linkProviderNames(message.text, providerLinks)}
                   </motion.p>
                   {/* Mobile only: the workspace panel this answer produced, attached
                       right under it, like an AI chat tool result. Desktop keeps the
-                      panel in the workspace column instead. */}
-                  {message.role === "assistant" && message.panel && (
+                      panel in the workspace column instead. The text arm skips this. */}
+                  {showPanels && message.role === "assistant" && message.panel && (
                     <div className="space-y-2 lg:hidden">
                       <RateChatCard from={from} to={to} rate={rate} focused={message.panel === "rate"} />
                       {message.panel === "chart" && (
@@ -430,7 +460,7 @@ export default function AskExperience({
                   )}
                 </div>
               ))}
-              {!workspaceReady && (
+              {showPanels && !workspaceReady && (
                 <div className="lg:hidden">
                   <ChatSkeletonCard />
                 </div>
@@ -479,7 +509,7 @@ export default function AskExperience({
           </div>
         </section>
 
-        <motion.section
+        {showPanels && <motion.section
           layoutScroll
           className="hidden min-w-0 overflow-y-auto bg-[#f5f4fa] px-3 py-4 sm:px-4 lg:block lg:h-full xl:px-6"
           aria-label="Rate workspace"
@@ -521,7 +551,7 @@ export default function AskExperience({
               )}
             </AnimatePresence>
           </div>
-        </motion.section>
+        </motion.section>}
       </main>
     </MotionConfig>
   );

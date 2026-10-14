@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
-import { currencies, money, number, type Currency } from "./data/fx-data";
+import { useEffect, useState } from "react";
+import { currencies, money, number, roundAmount, type Currency } from "./data/fx-data";
 import type { MarketStatus, PlatformRow } from "../lib/use-fx-market";
 import { ArrowIcon } from "./ui/ArrowIcon";
 import { SectionHeading } from "./ui/SectionHeading";
@@ -50,6 +50,12 @@ export function ProviderComparison({
 }) {
   const prefersReducedMotion = useReducedMotion();
   const [shareStatus, setShareStatus] = useState("Share");
+  const [introduced, setIntroduced] = useState(false);
+  useEffect(() => {
+    if (introduced || quotes.length === 0) return;
+    const timeout = window.setTimeout(() => setIntroduced(true), 900);
+    return () => window.clearTimeout(timeout);
+  }, [introduced, quotes.length]);
   const availableRates = quotes.flatMap((provider) =>
     provider.available && provider.rate != null ? [provider.rate] : [],
   );
@@ -113,6 +119,10 @@ export function ProviderComparison({
                 placeholder="Enter amount to convert"
                 value={amount}
                 onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, ""))}
+                onBlur={() => {
+                  const parsed = Number(amount.replaceAll(",", ""));
+                  if (amount.trim() && Number.isFinite(parsed)) setAmount(roundAmount(parsed));
+                }}
                 className={`min-w-0 flex-1 border-0 bg-transparent font-semibold ${compact ? "text-base" : "text-lg"} text-navy outline-none`}
               />
               <span className="text-sm font-bold text-[#64748b]">{from}</span>
@@ -206,6 +216,7 @@ export function ProviderComparison({
                   key={provider.id}
                   layout="position"
                   custom={index}
+                  initial={introduced ? false : undefined}
                   variants={{
                     hidden: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 },
                     visible: (custom: number) => ({
@@ -213,7 +224,7 @@ export function ProviderComparison({
                       y: 0,
                       transition: prefersReducedMotion
                         ? { duration: 0 }
-                        : { duration: 0.3, ease, delay: 0.15 + custom * 0.05 },
+                        : { duration: 0.3, ease, delay: introduced ? 0 : 0.15 + custom * 0.05 },
                     }),
                   }}
                   exit={{ opacity: 0 }}
@@ -221,7 +232,7 @@ export function ProviderComparison({
                   transition={{ layout: rowLayoutTransition }}
                   className={`rounded-[24px] transition-colors ${compact ? "p-2.5 pr-5" : "p-3 sm:p-3.5"} ${isBest ? "bg-primary text-white" : "bg-[#f0f2f5] text-navy"}`}
                 >
-                  <div className="flex items-center gap-2 sm:gap-3.5">
+                  <div className="flex min-w-0 items-center gap-2 sm:gap-3.5">
                     <div className={`grid shrink-0 place-items-center overflow-hidden rounded-full bg-white ${compact ? "h-9 w-9" : "h-9 w-9 sm:h-11 sm:w-11"} ${provider.logo ? "" : "border border-black/5"}`}>
                       {provider.logo ? (
                         <img
@@ -238,7 +249,7 @@ export function ProviderComparison({
                         <span className="text-base font-extrabold text-primary">{provider.mark}</span>
                       )}
                     </div>
-                    <div className="min-w-[64px] flex-1 sm:min-w-[80px]">
+                    <div className="min-w-0 flex-1 sm:min-w-[80px]">
                       <div className={`truncate font-semibold ${compact ? "text-[14px]" : "text-sm sm:text-base"} ${isBest ? "text-white" : "text-navy"}`}>
                         {provider.name}{isBest && <span className="ml-2 hidden rounded-full bg-white/20 px-2 py-1 align-middle text-[10px] font-semibold sm:inline">Best rate</span>}
                       </div>
@@ -287,12 +298,14 @@ export function ProviderComparison({
                     </div>
                     ) : null}
                     <div
-                      className={`relative shrink-0 rounded-[12px] text-right text-sm font-bold ${compact ? "sm:text-base" : "sm:text-lg"} ${isBest ? "text-white" : "text-navy"}`}
+                      className={`relative ml-auto grid shrink-0 justify-items-end rounded-[12px] text-right text-sm font-bold ${compact ? "sm:text-base" : "sm:text-lg"} ${isBest ? "text-white" : "text-navy"}`}
                       aria-busy={status === "loading"}
                     >
                       <div className={status === "loading" ? "opacity-0" : undefined}>
-                        {provider.available && provider.payout != null ? money(provider.payout, to) : "Not available yet"}
-                        <div className={`mt-0.5 text-[10px] font-medium ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>
+                        <div className="whitespace-nowrap">
+                          {provider.available && provider.payout != null ? money(provider.payout, to) : "Not available yet"}
+                        </div>
+                        <div className={`mt-0.5 max-w-[5.25rem] text-[9px] font-medium leading-tight sm:max-w-[8.5rem] sm:text-[10px] ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>
                           {provider.available ? (provider.speed ?? "recipient gets") : "no live quote"}
                         </div>
                       </div>

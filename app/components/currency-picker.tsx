@@ -100,13 +100,13 @@ export function CurrencyPicker({
           setActiveIndex(currencyList.indexOf(value));
           setOpen((isOpen) => !isOpen);
         }}
-        className={`flex h-full w-full items-center justify-center gap-2 rounded-[inherit] border-0 bg-gray-200 text-inherit focus-visible:outline-[3px] focus-visible:outline-primary focus-visible:outline-offset-2 ${hero ? "min-h-[42px] px-2 text-[17px] font-semibold" : pair ? "min-h-14 gap-2.5 px-3 text-[16px] font-bold" : "min-h-[33px] px-2 text-[11px] font-semibold"}`}
+        className={`flex h-full w-full items-center justify-center rounded-[inherit] border-0 bg-gray-200 text-inherit focus-visible:outline-[3px] focus-visible:outline-primary focus-visible:outline-offset-2 ${hero ? "min-h-8 gap-1 px-1.5 text-[13px] font-semibold sm:min-h-[42px] sm:gap-2 sm:px-2 sm:text-[17px]" : pair ? "min-h-14 gap-2.5 px-3 text-[16px] font-bold" : "min-h-[33px] gap-2 px-2 text-[11px] font-semibold"}`}
       >
         <img
           src={selected.icon}
           alt=""
           aria-hidden="true"
-          className={`shrink-0 rounded-full object-cover shadow-[0_0_0_1px_rgba(16,35,61,0.16)] ${pair ? "h-8 w-8" : hero ? "h-[23px] w-[23px]" : "h-[19px] w-[19px]"}`}
+          className={`shrink-0 rounded-full object-cover shadow-[0_0_0_1px_rgba(16,35,61,0.16)] ${pair ? "h-8 w-8" : hero ? "h-4 w-4 sm:h-[23px] sm:w-[23px]" : "h-[19px] w-[19px]"}`}
         />
         {pair ? (
           <span className="min-w-0 text-left leading-tight">
@@ -118,7 +118,7 @@ export function CurrencyPicker({
         ) : (
           <span>{value}</span>
         )}
-        <svg aria-hidden="true" viewBox="0 0 16 16" className={`shrink-0 text-[#718096] ${hero || pair ? "ml-0.5 h-4 w-4" : "h-3 w-3"}`}>
+        <svg aria-hidden="true" viewBox="0 0 16 16" className={`shrink-0 text-[#718096] ${hero ? "ml-0.5 h-3 w-3 sm:h-4 sm:w-4" : pair ? "ml-0.5 h-4 w-4" : "h-3 w-3"}`}>
           <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
         </svg>
       </button>

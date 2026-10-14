@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { assignAskVariant } from "../lib/ask-variant";
 import type { Currency } from "./data/fx-data";
 
 const suggestions = ["What is yesterday price?", "Cheapest provider?", "7-day trend", ];
@@ -12,7 +13,13 @@ export function FxAsk({ from, to, amount }: { from: Currency; to: Currency; amou
 
   function submitQuestion(value: string) {
     const text = value.trim() || `What is the ${from} to ${to} rate and trend?`;
-    const params = new URLSearchParams({ q: text, from, to, amount: amount.replaceAll(",", "") || "10" });
+    const params = new URLSearchParams({
+      q: text,
+      from,
+      to,
+      amount: amount.replaceAll(",", "") || "10",
+      variant: assignAskVariant(),
+    });
     router.push(`/ask?${params.toString()}`);
   }
 

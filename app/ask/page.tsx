@@ -1,6 +1,7 @@
 
 import AskExperience from "../components/ask-experience";
 import { currencyList, type Currency } from "../components/data/fx-data";
+import { askVariantFromParam } from "../lib/ask-variant";
 import { Footer } from "../components/footer";
 import { Header } from "../components/header";
 
@@ -9,6 +10,7 @@ type SearchParams = Promise<{
   from?: string | string[];
   to?: string | string[];
   amount?: string | string[];
+  variant?: string | string[];
 }>;
 
 function first(value: string | string[] | undefined) {
@@ -34,7 +36,13 @@ export default async function AskPage({ searchParams }: { searchParams: SearchPa
   return (
     <>
       <Header askHref="#ask-follow-up" startTarget="rates" />
-      <AskExperience initialFrom={from} initialTo={to} initialAmount={amount} initialQuestion={question} />
+      <AskExperience
+        initialFrom={from}
+        initialTo={to}
+        initialAmount={amount}
+        initialQuestion={question}
+        initialVariant={askVariantFromParam(first(params.variant))}
+      />
       <Footer />
     </>
   );

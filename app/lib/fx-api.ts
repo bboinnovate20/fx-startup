@@ -115,6 +115,7 @@ export function askFx(
     pair: FxPair;
     amount?: string;
     range: "1d" | "1w";
+    presentation?: "panels" | "text";
   },
   signal?: AbortSignal,
 ) {
@@ -129,6 +130,7 @@ export function askFx(
         amount: input.amount,
         range: input.range,
       },
+      ...(input.presentation === "text" ? { presentation: "text" } : {}),
     }),
   }).then((response) => readJson<FxAskResponse>(response));
 }
