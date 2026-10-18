@@ -12,6 +12,7 @@ import { ProviderDirectory } from "./provider-directory";
 import { TrendSection } from "./trend-section";
 import { AlertsSection } from "./alerts-section";
 import { Footer } from "./footer";
+import { WaveBand } from "./wave-band";
 
 export default function FxDashboard({
   initialValues,
@@ -50,7 +51,8 @@ export default function FxDashboard({
   return (
     <>
       <div className={`overflow-hidden`} id="top">
-        <div className="night-sky">
+        <div className="night-sky relative">
+          <WaveBand />
           <Header blend />
           <Hero
             {...{ from, to, setFrom, setTo, amount, setAmount }}
@@ -92,6 +94,7 @@ export default function FxDashboard({
                 rate={market.rate}
                 history={market.history}
                 historySource={market.historySource}
+                historyStatus={market.historyStatus}
                 historyPeriod={historyPeriod}
                 setHistoryPeriod={setHistoryPeriod}
               />

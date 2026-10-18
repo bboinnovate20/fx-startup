@@ -17,9 +17,17 @@ export type PlatformRow = {
   updatedAt: string | null;
   website: string | null;
   available: boolean;
+  chargesApplied?: boolean;
+  pending?: boolean;
 };
 
-type UnitQuote = Omit<PlatformRow, "payout"> & { receivePerUnit: number | null };
+type UnitQuote = Omit<PlatformRow, "payout" | "pending"> & { ratePerUnit: number | null };
+
+function typedAmount(amount: string) {
+  const value = Number(amount.replaceAll(",", ""));
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  return value;
+}
 
 function platformLogo(id: string, logo: string | null | undefined, directoryLogo?: string) {
   if (logo?.startsWith("/api/")) return `/fx-api${logo}`;
@@ -31,12 +39,6 @@ function platformLogo(id: string, logo: string | null | undefined, directoryLogo
 }
 
 export type MarketStatus = "loading" | "ready" | "unavailable";
-
-function typedAmount(amount: string) {
-  const value = Number(amount.replaceAll(",", ""));
-  if (!Number.isFinite(value) || value <= 0) return 0;
-  return value;
-}
 
 function numberOrNull(value: string | null | undefined) {
   if (value == null) return null;
@@ -65,6 +67,9 @@ export function useFxMarket(
     const controller = new AbortController();
     setStatus("loading");
     setRate(null);
+    setRatePair(null);
+    setUnitQuotes([]);
+    setQuotePair(null);
     setMessage(null);
 
     void (async () => {
@@ -100,15 +105,20 @@ export function useFxMarket(
       if (comparisonResult.status === "fulfilled") {
         for (const quote of comparisonResult.value.quotes) {
           const logo = logos.get(quote.providerId)?.logo;
-          const receivePerUnit = numberOrNull(quote.receiveAmount?.amount);
+          const received = numberOrNull(quote.receiveAmount?.amount);
           const quoteRate = numberOrNull(quote.rate);
+          const fee = numberOrNull(quote.fee?.amount);
+          const chargesApplied =
+            (fee != null && fee > 0) ||
+            (received != null && quoteRate != null && received > 0 && received + 0.005 < quoteRate);
           rows.set(quote.providerId, {
             id: quote.providerId,
             name: quote.providerName,
             logo: platformLogo(quote.providerId, quote.logo, logo),
             mark: quote.providerName.slice(0, 1),
             rate: quoteRate,
-            receivePerUnit: receivePerUnit ?? quoteRate,
+            ratePerUnit: quoteRate,
+            chargesApplied,
             speed: quote.speed,
             updatedAt: quote.lastUpdated ?? quote.retrievedAt ?? null,
             website: quote.website ?? logos.get(quote.providerId)?.url ?? null,
@@ -140,6 +150,9 @@ export function useFxMarket(
     const controller = new AbortController();
     const range = period === "day" ? "1d" : "1w";
     const key = `${from}:${to}:${period}`;
+    setHistory(null);
+    setHistorySource(null);
+    setHistoryKey(null);
 
     void getHistory(from, to, range, controller.signal)
       .then((result) => {
@@ -160,6 +173,11 @@ export function useFxMarket(
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
+        if (!controller.signal.aborted) {
+          setHistory(null);
+          setHistorySource(null);
+          setHistoryKey(key);
+        }
       });
 
     return () => controller.abort();
@@ -174,8 +192,8 @@ export function useFxMarket(
         logo: quote.logo,
         mark: quote.mark,
         rate: quote.rate,
-        payout:
-          quote.receivePerUnit == null ? null : quote.receivePerUnit * scale,
+        payout: quote.ratePerUnit == null ? null : quote.ratePerUnit * scale,
+        chargesApplied: quote.chargesApplied,
         speed: quote.speed,
         updatedAt: quote.updatedAt,
         website: quote.website,
@@ -197,8 +215,9 @@ export function useFxMarket(
     rate: ratePair === pair ? rate : null,
     history: historyReady ? history : null,
     historySource: historyReady ? historySource : null,
-    quotes,
-    bestId,
+    historyStatus: historyReady ? (history && history.length >= 2 ? "ready" : "unavailable") : "loading",
+    quotes: quotePair === pair ? quotes : [],
+    bestId: quotePair === pair ? bestId : null,
     status: pairReady ? status : "loading",
     message: pairReady ? message : null,
   };

@@ -2,7 +2,7 @@ import { Brand } from "./ui/Brand";
 
 export function Footer() {
   return (
-    <footer className="night-sky text-[#c5d0e4]" id="about">
+    <footer className="bg-[#090319] text-[#c5d0e4]" id="about">
       <div
         className={`max-w-[1145px] m-[auto] p-[25px_18px] flex items-center gap-[22px] [&_nav]:flex [&_nav]:items-center
           [&_nav]:gap-[17px] [&_nav]:ml-[auto] [&_nav]:text-[8px] [&_nav_a:hover]:text-white [&>_small]:text-[7px] [&>_small]:text-[#71839b] [&>_small]:whitespace-nowrap max-[900px]:flex-wrap

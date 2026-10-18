@@ -64,17 +64,32 @@ export const currencies = Object.fromEntries(currencyInfo) as Record<
 >;
 export const currencyList = Object.keys(currencies) as Currency[];
 
+export function visibleDigits(value: number, minimum = 2) {
+  const absolute = Math.abs(value);
+  if (!Number.isFinite(absolute) || absolute === 0) return minimum;
+  let digits = minimum;
+  while (digits < 8 && Number(absolute.toFixed(digits)) === 0) digits += 1;
+  return digits;
+}
+
 export function money(value: number, currency: Currency) {
+  const digits = visibleDigits(value, 2);
   try {
     return new Intl.NumberFormat("en-GB", {
       style: "currency",
       currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: Math.min(2, digits),
+      maximumFractionDigits: digits,
     }).format(value);
   } catch {
-    return `${number(value, 2)} ${currency}`;
+    return `${number(value, digits)} ${currency}`;
   }
+}
+
+export function formatAmount(value: string) {
+  const parsed = Number(value.replaceAll(",", ""));
+  if (!value.trim() || !Number.isFinite(parsed)) return value;
+  return number(parsed, 2);
 }
 
 export function roundAmount(value: number) {

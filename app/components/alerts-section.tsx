@@ -16,14 +16,14 @@ export function AlertsSection({
     <section className="mb-[48px] grid grid-cols-1 items-start gap-6 max-[700px]:mb-[38px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-8" id="alerts">
       <div className="mb-[19px] lg:mb-0">
  
-        <h2 className="m-[6px_0] max-w-[13ch] font-display text-[32px] font-semibold leading-[1.08] tracking-[-0.045em] text-navy lg:text-[43px]">
+        <h2 className="m-[6px_0] max-w-[13ch] font-display text-[32px] font-semibold leading-[1.08] tracking-[-0.045em] text-white lg:text-[43px]">
           Let the right rate find you.
         </h2>
-        <p className="m-0 max-w-[34ch] text-[14px] leading-[1.6] text-[#77869b] mt-4.5">
+        <p className="m-0 mt-4.5 max-w-[34ch] text-[14px] leading-[1.6] text-white/70">
           Set a target. We’ll help you keep an eye on the market.
         </p>
 
-        <p className="mb-2 px-7 bg-gray-300 p-3 max-w-max mt-7 rounded-full text-[11px] font-bold text- max-[700px]:text-[10px]">
+        <p className="mb-2 mt-7 max-w-max rounded-full bg-white/10 px-7 py-3 text-[11px] font-bold text-white max-[700px]:text-[10px]">
           PERSONALIZED RATE ALERTS
         </p>
       </div>

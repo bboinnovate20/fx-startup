@@ -207,6 +207,11 @@ function ProviderRateCards({
             aria-busy={loading}
           >
             <span className={loading ? "opacity-0" : undefined}>{money(provider.payout, to)}</span>
+            {provider.chargesApplied ? (
+              <span className={`mt-0.5 block text-[9px] font-medium leading-tight ${provider.id === highlighted ? "text-white/75" : "text-[#68768a]"}`}>
+                Extra charges applied
+              </span>
+            ) : null}
             {loading ? <span className="glass-shimmer" aria-hidden="true" /> : null}
           </span>
         </motion.div>
@@ -261,7 +266,7 @@ export function Hero({
 
   return (
     <section
-      className="relative isolate overflow-hidden bg-transparent px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14 lg:px-12 lg:pb-20 lg:pt-16 xl:px-20"
+      className="relative isolate z-10 overflow-hidden bg-transparent px-5 pb-44 pt-10 sm:px-8 sm:pb-48 sm:pt-14 lg:px-12 lg:pb-52 lg:pt-16 xl:px-20"
       id="rates"
     >
       <div className="relative z-10 mx-auto w-full max-w-[1220px]">

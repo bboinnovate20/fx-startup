@@ -28,6 +28,12 @@
   --icon-swap-blur: 2px;
   --icon-swap-start-scale: 0.25;
   --icon-swap-ease: ease-in-out;
+  --toast-open: 350ms;
+  --toast-close: 250ms;
+  --toast-distance: 16px;
+  --toast-blur: 2px;
+  --toast-scale: 0.97;
+  --toast-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -61,7 +67,7 @@
   }
 
   body {
-    @apply m-0 min-h-screen bg-background text-foreground font-sans text-sm antialiased;
+    @apply m-0 min-h-screen bg-[#090319] text-foreground font-sans text-sm antialiased;
   }
 
   button,
@@ -300,4 +306,54 @@
 
 @media (prefers-reduced-motion: reduce) {
   .t-icon-swap .t-icon { transition: none !important; }
+}
+
+.t-toast {
+  opacity: 0;
+  transform: translateY(var(--toast-distance)) scale(var(--toast-scale));
+  filter: blur(var(--toast-blur));
+  will-change: transform, opacity, filter;
+  transition:
+    opacity var(--toast-close) var(--toast-ease),
+    transform var(--toast-close) var(--toast-ease),
+    filter var(--toast-close) var(--toast-ease);
+}
+.t-toast.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  transition:
+    opacity var(--toast-open) var(--toast-ease),
+    transform var(--toast-open) var(--toast-ease),
+    filter var(--toast-open) var(--toast-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-toast { transition: none !important; }
+}
+
+.wave-band {
+  height: 180px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.wave-track {
+  display: block;
+  width: 200%;
+  height: 100%;
+  animation: wave-slide 18s linear infinite;
+}
+
+@keyframes wave-slide {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-track { animation: none; }
+}
+
+@media (max-width: 700px) {
+  .wave-band { height: 120px; }
 }

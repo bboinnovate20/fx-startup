@@ -1,8 +1,26 @@
 import { useEffect, useState } from "react";
 import type { MarketStatus } from "../lib/use-fx-market";
 import { CurrencyPicker } from "./currency-picker";
-import { number, roundAmount, type Currency } from "./data/fx-data";
+import { number, type Currency } from "./data/fx-data";
 import { FxAsk } from "./fx-ask";
+
+function plainAmount(value: number) {
+  if (!Number.isFinite(value)) return "";
+  return value.toLocaleString("en-GB", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    useGrouping: false,
+  });
+}
+
+function groupedAmount(value: string) {
+  const parsed = Number(value.replaceAll(",", ""));
+  if (!value.trim() || !Number.isFinite(parsed)) return value;
+  return parsed.toLocaleString("en-GB", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
 
 export function Converter({
   from,
@@ -28,6 +46,7 @@ export function Converter({
   compact?: boolean;
 }) {
   const loading = status === "loading";
+  const [editingAmount, setEditingAmount] = useState(false);
   const [editingTarget, setEditingTarget] = useState(false);
   const [targetDraft, setTargetDraft] = useState("");
   const receive = rate === null ? null : (Number(amount.replaceAll(",", "")) || 0) * rate;
@@ -41,13 +60,13 @@ export function Converter({
   function commitAmount(raw: string) {
     const parsed = Number(raw.replaceAll(",", ""));
     if (!raw.trim() || !Number.isFinite(parsed)) return;
-    setAmount(roundAmount(parsed));
+    setAmount(plainAmount(parsed));
   }
 
   function swapCurrencies() {
     const parsed = Number(targetDraft.replaceAll(",", ""));
     if (rate !== null && targetDraft.trim() && Number.isFinite(parsed)) {
-      setAmount(roundAmount(parsed));
+      setAmount(plainAmount(parsed));
     }
     setEditingTarget(false);
     setFrom(to);
@@ -100,9 +119,13 @@ export function Converter({
             id="send-amount"
             inputMode="decimal"
             placeholder="Enter Amount"
-            value={amount}
+            value={editingAmount ? amount : groupedAmount(amount)}
+            onFocus={() => setEditingAmount(true)}
             onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, ""))}
-            onBlur={() => commitAmount(amount)}
+            onBlur={() => {
+              setEditingAmount(false);
+              commitAmount(amount);
+            }}
             aria-label={`Amount in ${from}`}
             className={`min-w-0 grow flex-1 border-0 bg-transparent p-0 font-display font-bold text-[#202421] outline-none ${compact ? "text-[18px]" : "text-[18px] sm:text-[22px]"}`}
           />
@@ -152,7 +175,7 @@ export function Converter({
                 if (!next) setAmount("");
                 else if (rate !== null && rate > 0) {
                   const parsed = Number(next.replaceAll(",", ""));
-                  if (Number.isFinite(parsed)) setAmount(roundAmount(parsed / rate));
+                  if (Number.isFinite(parsed)) setAmount(plainAmount(parsed / rate));
                 }
               }}
               aria-label={`Converted amount in ${to}`}
@@ -184,7 +207,11 @@ export function Converter({
         </>
       ))}
       {showAsk && !loading && <FxAsk from={from} to={to} amount={amount} />}
-      {!compact && <p className="mb-0 mt-2.5 text-center text-[8px] leading-relaxed text-[#818980]">Indicative market rate · provider rates and fees may vary</p>}
+      {!loading && (
+        <p className={`mb-0 text-center font-medium text-[#5c6560] ${compact ? "mt-2 text-[11px]" : "mt-2.5 text-[12px]"}`}>
+          Normal exchange rate. Extra charges applied.
+        </p>
+      )}
     </section>
   );
 }

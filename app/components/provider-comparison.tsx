@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
-import { currencies, money, number, roundAmount, type Currency } from "./data/fx-data";
+import { currencies, formatAmount, money, number, roundAmount, visibleDigits, type Currency } from "./data/fx-data";
 import type { MarketStatus, PlatformRow } from "../lib/use-fx-market";
 import { ArrowIcon } from "./ui/ArrowIcon";
 import { SectionHeading } from "./ui/SectionHeading";
@@ -32,7 +32,6 @@ export function ProviderComparison({
   quotes,
   bestId = null,
   status = "ready",
-  message = null,
   compact = false,
   showInput = true,
 }: {
@@ -50,12 +49,28 @@ export function ProviderComparison({
 }) {
   const prefersReducedMotion = useReducedMotion();
   const [shareStatus, setShareStatus] = useState("Share");
+  const [editingAmount, setEditingAmount] = useState(false);
+  const [toastOn, setToastOn] = useState(false);
   const [introduced, setIntroduced] = useState(false);
+  const pairMissing = status !== "loading" && quotes.length === 0;
   useEffect(() => {
     if (introduced || quotes.length === 0) return;
     const timeout = window.setTimeout(() => setIntroduced(true), 900);
     return () => window.clearTimeout(timeout);
   }, [introduced, quotes.length]);
+  useEffect(() => {
+    if (!pairMissing) {
+      setToastOn(false);
+      return;
+    }
+    setToastOn(false);
+    const open = window.setTimeout(() => setToastOn(true), 20);
+    const close = window.setTimeout(() => setToastOn(false), 3400);
+    return () => {
+      window.clearTimeout(open);
+      window.clearTimeout(close);
+    };
+  }, [from, pairMissing, to]);
   const availableRates = quotes.flatMap((provider) =>
     provider.available && provider.rate != null ? [provider.rate] : [],
   );
@@ -116,10 +131,13 @@ export function ProviderComparison({
                 id="compare-send-amount"
                 aria-label={`Amount in ${from}`}
                 inputMode="decimal"
-                placeholder="Enter amount to convert"
-                value={amount}
+                placeholder={pairMissing ? "Not available" : "Enter amount to convert"}
+                value={pairMissing ? "" : editingAmount ? amount : formatAmount(amount)}
+                disabled={pairMissing}
+                onFocus={() => setEditingAmount(true)}
                 onChange={(event) => setAmount(event.target.value.replace(/[^\d.,]/g, ""))}
                 onBlur={() => {
+                  setEditingAmount(false);
                   const parsed = Number(amount.replaceAll(",", ""));
                   if (amount.trim() && Number.isFinite(parsed)) setAmount(roundAmount(parsed));
                 }}
@@ -163,7 +181,7 @@ export function ProviderComparison({
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#75839a]">Exchange rate</div>
               <div className="mt-1 flex items-center gap-1.5 text-[13px] font-bold text-navy">
-                1 {from} <ArrowIcon className="h-3 w-3 text-primary" /> {rate ? `${number(rate, 2)} ${to}` : `— ${to}`}
+                1 {from} <ArrowIcon className="h-3 w-3 text-primary" /> {rate ? `${number(rate, visibleDigits(rate, rate < 10 ? 4 : 2))} ${to}` : `— ${to}`}
               </div>
             </div>
           </div>
@@ -303,10 +321,14 @@ export function ProviderComparison({
                     >
                       <div className={status === "loading" ? "opacity-0" : undefined}>
                         <div className="whitespace-nowrap">
-                          {provider.available && provider.payout != null ? money(provider.payout, to) : "Not available yet"}
+                          {provider.available && provider.payout != null ? money(provider.payout, to) : "Not available"}
                         </div>
                         <div className={`mt-0.5 max-w-[5.25rem] text-[9px] font-medium leading-tight sm:max-w-[8.5rem] sm:text-[10px] ${isBest ? "text-white/75" : "text-[#7c8798]"}`}>
-                          {provider.available ? (provider.speed ?? "recipient gets") : "no live quote"}
+                          {provider.available
+                            ? provider.chargesApplied
+                              ? "Extra charges applied"
+                              : (provider.speed ?? "recipient gets")
+                            : "Not available"}
                         </div>
                       </div>
                       {status === "loading" ? <span className="glass-shimmer" aria-hidden="true" /> : null}
@@ -314,25 +336,28 @@ export function ProviderComparison({
                   </div>
                 </motion.article>
               );
-            }) : (
+            }) : status === "loading" ? (
               <motion.div
-                key="empty"
+                key="loading"
                 variants={{
                   hidden: prefersReducedMotion ? { opacity: 1 } : { opacity: 0 },
-                  visible: { opacity: 1, transition: { duration: 0.3 } },
+                  visible: { opacity: 1, transition: { duration: 0.2 } },
                 }}
-                className="rounded-[16px] bg-[#f6f8fb] px-5 py-8 text-center text-sm text-[#68768a]"
+                className="rounded-[16px] bg-[#f6f8fb] px-5 py-6 text-center text-sm text-[#68768a]"
               >
-                {status === "loading"
-                  ? "Loading provider quotes…"
-                  : message ?? `Estimates aren’t available for ${from} to ${to} yet.`}
+                Loading provider quotes…
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
         </motion.div>
 
         <div className={`border-t border-[#e9edf3] text-center text-[#8490a1] ${compact ? "px-4 py-2.5 text-[11px]" : "px-4 py-3 text-[11px]"}`}>
-          Live quotes come from connected providers.
+          Normal exchange rate. Extra charges applied.
+        </div>
+      </div>
+      <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+        <div className={`t-toast rounded-full bg-navy px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_10px_24px_rgba(11,31,58,0.28)] ${toastOn ? "is-open" : ""}`} role="status">
+          Not available
         </div>
       </div>
     </section>
