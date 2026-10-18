@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Google_Sans, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
-// Brand/display typeface. Self-hosted by Next at build time, so the browser
-// never contacts fonts.googleapis.com at runtime.
-const googleSans = Google_Sans({
-  subsets: ["latin"],
+// Brand/display typeface. The Google Fonts entry has no size-adjust metrics,
+// and that lookup is reported as a build error, so the Latin file is hosted
+// here the same way Boing is. Glyphs it does not carry fall through to Boing.
+const googleSans = localFont({
+  src: "../public/fonts/GoogleSans-latin.woff2",
+  weight: "400 700",
   style: "normal",
   display: "swap",
   variable: "--font-google-sans",

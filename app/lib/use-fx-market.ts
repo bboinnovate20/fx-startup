@@ -210,12 +210,17 @@ export function useFxMarket(
 
   const pairReady = ratePair === pair && quotePair === pair;
   const historyReady = historyKey === `${pair}:${period}`;
+  const historyStatus: MarketStatus = !historyReady
+    ? "loading"
+    : history && history.length >= 2
+      ? "ready"
+      : "unavailable";
 
   return {
     rate: ratePair === pair ? rate : null,
     history: historyReady ? history : null,
     historySource: historyReady ? historySource : null,
-    historyStatus: historyReady ? (history && history.length >= 2 ? "ready" : "unavailable") : "loading",
+    historyStatus,
     quotes: quotePair === pair ? quotes : [],
     bestId: quotePair === pair ? bestId : null,
     status: pairReady ? status : "loading",
