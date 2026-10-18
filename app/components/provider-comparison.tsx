@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { currencies, formatAmount, money, number, roundAmount, visibleDigits, type Currency } from "./data/fx-data";
 import type { MarketStatus, PlatformRow } from "../lib/use-fx-market";
 import { ArrowIcon } from "./ui/ArrowIcon";
@@ -34,6 +34,10 @@ export function ProviderComparison({
   status = "ready",
   compact = false,
   showInput = true,
+  previewCount,
+  viewAllOpen = false,
+  viewAllPending = false,
+  onViewAll,
 }: {
   from: Currency;
   to: Currency;
@@ -46,18 +50,63 @@ export function ProviderComparison({
   message?: string | null;
   compact?: boolean;
   showInput?: boolean;
+  previewCount?: number;
+  viewAllOpen?: boolean;
+  viewAllPending?: boolean;
+  onViewAll?: () => void;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const listRef = useRef<HTMLDivElement>(null);
   const [shareStatus, setShareStatus] = useState("Share");
   const [editingAmount, setEditingAmount] = useState(false);
   const [toastOn, setToastOn] = useState(false);
   const [introduced, setIntroduced] = useState(false);
-  const pairMissing = status !== "loading" && quotes.length === 0;
+  const pairKey = `${from}:${to}`;
+  const [seenPair, setSeenPair] = useState(pairKey);
+  const [revealed, setRevealed] = useState(false);
+  if (seenPair !== pairKey) {
+    setSeenPair(pairKey);
+    setRevealed(false);
+    setIntroduced(false);
+  }
+  const listedQuotes =
+    previewCount != null && !viewAllOpen ? quotes.slice(0, previewCount) : quotes;
+  const pairMissing = status !== "loading" && listedQuotes.length === 0;
+  const showViewAll = Boolean(
+    onViewAll && previewCount != null && !viewAllOpen && listedQuotes.length >= previewCount,
+  );
   useEffect(() => {
-    if (introduced || quotes.length === 0) return;
+    if (introduced || listedQuotes.length === 0) return;
     const timeout = window.setTimeout(() => setIntroduced(true), 900);
     return () => window.clearTimeout(timeout);
-  }, [introduced, quotes.length]);
+  }, [introduced, listedQuotes.length]);
+  // Reveal as soon as the list is on screen. Do not wait for quotes: if the
+  // user is already on this section while the pair is loading, the observer
+  // must be live so cards are not left at opacity 0 when data arrives.
+  useEffect(() => {
+    if (revealed) return;
+    const node = listRef.current;
+    if (!node) return;
+
+    const margin = 120;
+    const alreadyVisible = () => {
+      const rect = node.getBoundingClientRect();
+      return rect.bottom > -margin && rect.top < (window.innerHeight || 0) + margin;
+    };
+    if (alreadyVisible()) {
+      setRevealed(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setRevealed(true);
+      },
+      { threshold: 0.01, rootMargin: `${margin}px 0px` },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [listedQuotes.length, revealed, status]);
   useEffect(() => {
     if (!pairMissing) {
       setToastOn(false);
@@ -71,7 +120,7 @@ export function ProviderComparison({
       window.clearTimeout(close);
     };
   }, [from, pairMissing, to]);
-  const availableRates = quotes.flatMap((provider) =>
+  const availableRates = listedQuotes.flatMap((provider) =>
     provider.available && provider.rate != null ? [provider.rate] : [],
   );
   const lowestProviderRate = availableRates.length ? Math.min(...availableRates) : null;
@@ -192,10 +241,10 @@ export function ProviderComparison({
         </div>
 
         <motion.div
+          ref={listRef}
           className={compact ? "space-y-2 p-3" : "space-y-3 p-4 sm:p-6"}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2, margin: "0px 0px -60px 0px" }}
+          animate={prefersReducedMotion || revealed ? "visible" : "hidden"}
         >
 
       {!compact && (
@@ -220,7 +269,7 @@ export function ProviderComparison({
         </motion.div>
       )}
           <AnimatePresence>
-            {quotes.length ? quotes.map((provider, index) => {
+            {listedQuotes.length ? listedQuotes.map((provider, index) => {
               const isBest = provider.available && provider.id === (bestId ?? quotes.find((item) => item.available)?.id);
               const difference = provider.available && provider.rate != null && lowestProviderRate
                 ? ((provider.rate / lowestProviderRate) - 1) * 100
@@ -234,7 +283,7 @@ export function ProviderComparison({
                   key={provider.id}
                   layout="position"
                   custom={index}
-                  initial={introduced ? false : undefined}
+                  initial={introduced || viewAllOpen ? false : undefined}
                   variants={{
                     hidden: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 },
                     visible: (custom: number) => ({
@@ -349,6 +398,16 @@ export function ProviderComparison({
               </motion.div>
             ) : null}
           </AnimatePresence>
+          {showViewAll ? (
+            <button
+              type="button"
+              onClick={onViewAll}
+              disabled={viewAllPending}
+              className="flex h-11 w-full items-center justify-center rounded-full border border-[#d7dfeb] bg-white text-[13px] font-semibold text-navy transition-colors hover:bg-[#f4f7fc] disabled:cursor-wait disabled:opacity-70"
+            >
+              {viewAllPending ? "Loading providers…" : "View all"}
+            </button>
+          ) : null}
         </motion.div>
 
         <div className={`border-t border-[#e9edf3] text-center text-[#8490a1] ${compact ? "px-4 py-2.5 text-[11px]" : "px-4 py-3 text-[11px]"}`}>

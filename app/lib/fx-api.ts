@@ -103,10 +103,17 @@ export function compareProviders(
   to: string,
   amount: string | undefined,
   signal?: AbortSignal,
+  limit?: number,
 ) {
-  return fetch(`/fx-api/api/v1/rates/compare?${query({ from, to, amount })}`, { signal }).then(
-    (response) => readJson<FxComparison>(response),
-  );
+  return fetch(
+    `/fx-api/api/v1/rates/compare?${query({
+      from,
+      to,
+      amount,
+      limit: limit == null ? undefined : String(limit),
+    })}`,
+    { signal },
+  ).then((response) => readJson<FxComparison>(response));
 }
 
 export function askFx(

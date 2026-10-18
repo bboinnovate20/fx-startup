@@ -24,7 +24,7 @@ export default function FxDashboard({
   const [amount, setAmount] = useState(initialValues?.amount ?? "10");
   const [historyPeriod, setHistoryPeriod] = useState<RateHistoryPeriod>("week");
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
-  const market = useFxMarket(from, to, amount, historyPeriod);
+  const market = useFxMarket(from, to, amount, historyPeriod, 3);
 
   useEffect(() => {
     let active = true;
@@ -80,6 +80,10 @@ export default function FxDashboard({
                 bestId={market.bestId}
                 status={market.status}
                 message={market.message}
+                previewCount={3}
+                viewAllOpen={market.comparisonExpanded}
+                viewAllPending={market.expandingComparison}
+                onViewAll={market.expandComparison}
               />
             </div>
             <div className="px-6 pt-6 max-[700px]:pt-10">

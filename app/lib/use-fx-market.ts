@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProviderInfo } from "../components/data/providers";
-import { compareProviders, getHistory, getRate } from "./fx-api";
+import { compareProviders, getHistory, getRate, type FxComparison } from "./fx-api";
 
 export type HistoryPoint = { time: string; rate: number };
 
@@ -40,6 +40,46 @@ function platformLogo(id: string, logo: string | null | undefined, directoryLogo
 
 export type MarketStatus = "loading" | "ready" | "unavailable";
 
+function unitQuotesFromComparison(
+  comparison: FxComparison,
+  logos: Map<string, ProviderInfo>,
+): UnitQuote[] {
+  const rows = new Map<string, UnitQuote>();
+  for (const quote of comparison.quotes) {
+    const logo = logos.get(quote.providerId)?.logo;
+    const received = numberOrNull(quote.receiveAmount?.amount);
+    const quoteRate = numberOrNull(quote.rate);
+    const fee = numberOrNull(quote.fee?.amount);
+    const chargesApplied =
+      (fee != null && fee > 0) ||
+      (received != null && quoteRate != null && received > 0 && received + 0.005 < quoteRate);
+    rows.set(quote.providerId, {
+      id: quote.providerId,
+      name: quote.providerName,
+      logo: platformLogo(quote.providerId, quote.logo, logo),
+      mark: quote.providerName.slice(0, 1),
+      rate: quoteRate,
+      ratePerUnit: quoteRate,
+      chargesApplied,
+      speed: quote.speed,
+      updatedAt: quote.lastUpdated ?? quote.retrievedAt ?? null,
+      website: quote.website ?? logos.get(quote.providerId)?.url ?? null,
+      available: true,
+    });
+  }
+  for (const [id, row] of rows) {
+    if (!row.logo) row.logo = logos.get(id)?.logo;
+  }
+  return [...rows.values()];
+}
+
+async function providerLogos(signal?: AbortSignal) {
+  const directory = await fetch("/data/providers.json", { signal })
+    .then((response) => (response.ok ? (response.json() as Promise<ProviderInfo[]>) : []))
+    .catch(() => [] as ProviderInfo[]);
+  return new Map(directory.map((item) => [item.id, item]));
+}
+
 function numberOrNull(value: string | null | undefined) {
   if (value == null) return null;
   const parsed = Number(value);
@@ -51,6 +91,7 @@ export function useFxMarket(
   to: string,
   amount: string,
   period: "day" | "week",
+  compareLimit?: number,
 ) {
   const [rate, setRate] = useState<number | null>(null);
   const [ratePair, setRatePair] = useState<string | null>(null);
@@ -61,27 +102,30 @@ export function useFxMarket(
   const [quotePair, setQuotePair] = useState<string | null>(null);
   const [status, setStatus] = useState<MarketStatus>("loading");
   const [message, setMessage] = useState<string | null>(null);
+  const [comparisonExpanded, setComparisonExpanded] = useState(false);
+  const [expandingComparison, setExpandingComparison] = useState(false);
+  const expandAbort = useRef<AbortController | null>(null);
   const pair = `${from}:${to}`;
 
   useEffect(() => {
     const controller = new AbortController();
+    expandAbort.current?.abort();
     setStatus("loading");
     setRate(null);
     setRatePair(null);
     setUnitQuotes([]);
     setQuotePair(null);
     setMessage(null);
+    setComparisonExpanded(false);
+    setExpandingComparison(false);
 
     void (async () => {
-      const directory = await fetch("/data/providers.json", { signal: controller.signal })
-        .then((response) => (response.ok ? (response.json() as Promise<ProviderInfo[]>) : []))
-        .catch(() => [] as ProviderInfo[]);
+      const logos = await providerLogos(controller.signal);
       if (controller.signal.aborted) return;
-      const logos = new Map(directory.map((item) => [item.id, item]));
 
       const [rateResult, comparisonResult] = await Promise.allSettled([
         getRate(from, to, controller.signal),
-        compareProviders(from, to, "1", controller.signal),
+        compareProviders(from, to, "1", controller.signal, compareLimit),
       ]);
       if (controller.signal.aborted) return;
 
@@ -101,37 +145,9 @@ export function useFxMarket(
         );
       }
 
-      const rows = new Map<string, UnitQuote>();
       if (comparisonResult.status === "fulfilled") {
-        for (const quote of comparisonResult.value.quotes) {
-          const logo = logos.get(quote.providerId)?.logo;
-          const received = numberOrNull(quote.receiveAmount?.amount);
-          const quoteRate = numberOrNull(quote.rate);
-          const fee = numberOrNull(quote.fee?.amount);
-          const chargesApplied =
-            (fee != null && fee > 0) ||
-            (received != null && quoteRate != null && received > 0 && received + 0.005 < quoteRate);
-          rows.set(quote.providerId, {
-            id: quote.providerId,
-            name: quote.providerName,
-            logo: platformLogo(quote.providerId, quote.logo, logo),
-            mark: quote.providerName.slice(0, 1),
-            rate: quoteRate,
-            ratePerUnit: quoteRate,
-            chargesApplied,
-            speed: quote.speed,
-            updatedAt: quote.lastUpdated ?? quote.retrievedAt ?? null,
-            website: quote.website ?? logos.get(quote.providerId)?.url ?? null,
-            available: true,
-          });
-        }
+        setUnitQuotes(unitQuotesFromComparison(comparisonResult.value, logos));
       }
-
-      for (const [id, row] of rows) {
-        if (!row.logo) row.logo = logos.get(id)?.logo;
-      }
-
-      setUnitQuotes([...rows.values()]);
       setQuotePair(`${from}:${to}`);
     })().catch((error: unknown) => {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -144,7 +160,29 @@ export function useFxMarket(
     });
 
     return () => controller.abort();
-  }, [from, to]);
+  }, [compareLimit, from, to]);
+
+  const expandComparison = useCallback(() => {
+    if (compareLimit == null || comparisonExpanded || expandingComparison) return;
+    const controller = new AbortController();
+    expandAbort.current?.abort();
+    expandAbort.current = controller;
+    setExpandingComparison(true);
+    void (async () => {
+      const logos = await providerLogos(controller.signal);
+      const comparison = await compareProviders(from, to, "1", controller.signal);
+      if (controller.signal.aborted) return;
+      setUnitQuotes(unitQuotesFromComparison(comparison, logos));
+      setQuotePair(`${from}:${to}`);
+      setComparisonExpanded(true);
+    })()
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setExpandingComparison(false);
+      });
+  }, [compareLimit, comparisonExpanded, expandingComparison, from, to]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -225,5 +263,8 @@ export function useFxMarket(
     bestId: quotePair === pair ? bestId : null,
     status: pairReady ? status : "loading",
     message: pairReady ? message : null,
+    comparisonExpanded,
+    expandingComparison,
+    expandComparison,
   };
 }
