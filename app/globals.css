@@ -16,9 +16,10 @@
   --success: #21b77b;
   --red: #dc2626;
   --amber: #f59e0b;
-  /* Body: Inter, loaded by next/font (see app/layout.tsx), behind the system
-     stack for glyphs the face does not carry. */
-  --font-body: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
+  /* SF Pro first, where the system provides it. Inter is the fallback that
+     actually loads. system-ui and Segoe UI only cover glyphs Inter lacks. */
+  --font-body: "SF Pro Text", "SF Pro Display", "SF Pro", -apple-system, BlinkMacSystemFont,
+    var(--font-inter), system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --panel-open-dur: 400ms;
   --panel-close-dur: 350ms;
   --panel-translate-y: 100px;
@@ -34,6 +35,11 @@
   --toast-blur: 2px;
   --toast-scale: 0.97;
   --toast-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-scale: 0.96;
+  --modal-scale-close: 0.96;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -51,10 +57,8 @@
   --color-negative: var(--red);
   --color-warning: var(--amber);
   --font-sans: var(--font-body);
-  /* Brand/display: Google Sans first, Boing behind it, then the system stack
-     for glyphs neither face carries (e.g. ₦). */
-  --font-display: var(--font-google-sans), var(--font-boing), ui-sans-serif, system-ui,
-    sans-serif;
+  --font-display: var(--font-body);
+  --font-hegarty: var(--font-bbh-hegarty), var(--font-body);
 }
 
 @layer base {
@@ -105,6 +109,22 @@
   h3 {
     @apply font-display font-semibold tracking-[-0.045em];
   }
+}
+
+.site-header-surface {
+  opacity: 0;
+  box-shadow: 0 0 0 rgb(5 7 15 / 0);
+  transition:
+    opacity var(--modal-open-dur) var(--modal-ease),
+    box-shadow var(--modal-open-dur) var(--modal-ease);
+}
+.site-header-surface.is-solid {
+  opacity: 1;
+  box-shadow: 0 12px 32px rgb(5 7 15 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header-surface { transition: none !important; }
 }
 
 .night-sky {
@@ -356,4 +376,45 @@
 
 @media (max-width: 700px) {
   .wave-band { height: 120px; }
+}
+
+.t-modal {
+  transform-origin: center;
+  transform: scale(var(--modal-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-open-dur) var(--modal-ease),
+    opacity   var(--modal-open-dur) var(--modal-ease);
+  will-change: transform, opacity;
+}
+.t-modal.is-open {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-modal.is-closing {
+  transform: scale(var(--modal-scale-close));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-close-dur) var(--modal-ease),
+    opacity   var(--modal-close-dur) var(--modal-ease);
+}
+
+.t-modal-backdrop {
+  opacity: 0;
+  transition: opacity var(--modal-open-dur) var(--modal-ease);
+}
+.t-modal-backdrop.is-open {
+  opacity: 1;
+}
+.t-modal-backdrop.is-closing {
+  opacity: 0;
+  transition: opacity var(--modal-close-dur) var(--modal-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-modal { transition: none !important; }
+  .t-modal-backdrop { transition: none !important; }
 }

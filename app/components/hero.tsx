@@ -282,7 +282,7 @@ export function Hero({
               Smart currency exchange
             </motion.span>
 
-            <h1 className="relative mb-0 mt-4 text-[24px] font-bold leading-[1.05] tracking-tight text-white sm:text-[36px] lg:text-[48px] xl:text-[44px]">
+            <h1 className="relative mb-0 mt-4 font-hegarty text-[24px] font-normal leading-[1.05] tracking-tight text-white sm:text-[36px] lg:text-[48px] xl:text-[44px]">
               <motion.span
                 className="block"
                 aria-hidden="true"

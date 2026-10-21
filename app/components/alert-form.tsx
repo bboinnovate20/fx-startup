@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { Button } from "./ui/Button";
 import { CurrencyPicker } from "./currency-picker";
 import type { Alert, Currency } from "./data/fx-data";
@@ -10,12 +10,14 @@ export function AlertForm({
   setFrom,
   setTo,
   compact = false,
+  headingId,
 }: {
   from: Currency;
   to: Currency;
   setFrom: (value: Currency) => void;
   setTo: (value: Currency) => void;
   compact?: boolean;
+  headingId?: string;
 }) {
   const [target, setTarget] = useState("2050");
   const [low, setLow] = useState("2000");
@@ -24,6 +26,7 @@ export function AlertForm({
   const [channel, setChannel] = useState<Alert["channel"]>("Telegram");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const channelName = useId();
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (mode === "range" && Number(low) > Number(high)) {
@@ -45,7 +48,7 @@ export function AlertForm({
           [&_small]:block [&_small]:text-[12px] [&_small]:text-[#64748b] [&_small]:mt-1`}
       >
         <span>
-          <h3 className={compact ? "text-[18px]!" : "text-2xl!"}>Create alert</h3>
+          <h3 id={headingId} className={compact ? "text-[18px]!" : "text-2xl!"}>Create alert</h3>
           <small>Choose the rate you want to watch.</small>
         </span>
       </div>
@@ -180,7 +183,7 @@ export function AlertForm({
             >
               <input
                 type="radio"
-                name="channel"
+                name={channelName}
                 checked={channel === "Telegram"}
                 onChange={() => setChannel("Telegram")}
               />
@@ -198,7 +201,7 @@ export function AlertForm({
             >
               <input
                 type="radio"
-                name="channel"
+                name={channelName}
                 checked={channel === "WhatsApp"}
                 onChange={() => setChannel("WhatsApp")}
               />

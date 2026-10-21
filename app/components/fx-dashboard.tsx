@@ -50,10 +50,10 @@ export default function FxDashboard({
 
   return (
     <>
-      <div className={`overflow-hidden`} id="top">
-        <div className="night-sky relative">
+      <Header blend />
+      <div className="overflow-hidden" id="top">
+        <div className="night-sky relative -mt-[74px] pt-[74px] max-[700px]:-mt-16 max-[700px]:pt-16">
           <WaveBand />
-          <Header blend />
           <Hero
             {...{ from, to, setFrom, setTo, amount, setAmount }}
             rate={market.rate}
@@ -87,7 +87,7 @@ export default function FxDashboard({
               />
             </div>
             <div className="px-6 pt-6 max-[700px]:pt-10">
-              <ProviderDirectory providers={quotedProviders} />
+              <ProviderDirectory providers={providers} />
             </div>
             <div className="px-6 pt-6 max-[700px]:px-0 max-[700px]:pt-10">
               <TrendSection

@@ -21,6 +21,7 @@ export function Header({
   blend?: boolean;
 } = {}) {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const close = () => setOpen(false);
 
   useEffect(() => {
@@ -32,8 +33,19 @@ export function Header({
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className={`relative z-50 h-[74px] text-white max-[700px]:sticky max-[700px]:top-0 max-[700px]:h-16 ${blend ? "bg-transparent" : "night-sky"}`}>
+    <header className="sticky top-0 z-50 h-[74px] text-white max-[700px]:h-16">
+      <div
+        aria-hidden="true"
+        className={`site-header-surface night-sky pointer-events-none absolute inset-0 -z-10 ${!blend || scrolled ? "is-solid" : ""}`}
+      />
       <div className="relative mx-auto flex h-full w-full max-w-360 items-center gap-6 px-6 sm:px-8 lg:px-12 2xl:px-25 max-[700px]:gap-3 max-[700px]:px-4">
         <Brand />
 

@@ -3,6 +3,7 @@ import type { MarketStatus } from "../lib/use-fx-market";
 import { CurrencyPicker } from "./currency-picker";
 import { number, type Currency } from "./data/fx-data";
 import { FxAsk } from "./fx-ask";
+import { RateAlertDialog } from "./rate-alert-dialog";
 
 function plainAmount(value: number) {
   if (!Number.isFinite(value)) return "";
@@ -48,6 +49,7 @@ export function Converter({
   const loading = status === "loading";
   const [editingAmount, setEditingAmount] = useState(false);
   const [editingTarget, setEditingTarget] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
   const [targetDraft, setTargetDraft] = useState("");
   const receive = rate === null ? null : (Number(amount.replaceAll(",", "")) || 0) * rate;
 
@@ -201,11 +203,25 @@ export function Converter({
           >
             Compare providers
           </button>
-          <a href="#alerts" className="mt-1.5 flex h-9 w-full items-center justify-center rounded-full border border-gray-300 bg-white text-[12px] font-semibold text-black transition hover:bg-[#f5faf2] sm:h-[39px]">
+          <button
+            type="button"
+            onClick={() => setAlertOpen(true)}
+            className="mt-1.5 flex h-9 w-full items-center justify-center rounded-full border border-gray-300 bg-white text-[12px] font-semibold text-black transition hover:bg-[#f5faf2] sm:h-[39px]"
+          >
             Track exchange rate
-          </a>
+          </button>
         </>
       ))}
+      {!compact && (
+        <RateAlertDialog
+          open={alertOpen}
+          onClose={() => setAlertOpen(false)}
+          from={from}
+          to={to}
+          setFrom={setFrom}
+          setTo={setTo}
+        />
+      )}
       {showAsk && !loading && <FxAsk from={from} to={to} amount={amount} />}
       {!loading && (
         <p className={`mb-0 text-center font-medium text-[#5c6560] ${compact ? "mt-2 text-[11px]" : "mt-2.5 text-[12px]"}`}>
