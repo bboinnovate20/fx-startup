@@ -266,7 +266,7 @@ export function Hero({
 
   return (
     <section
-      className="relative isolate z-10 overflow-hidden bg-transparent px-5 pb-44 pt-10 sm:px-8 sm:pb-48 sm:pt-14 lg:px-12 lg:pb-52 lg:pt-16 xl:px-20"
+      className="relative isolate z-10 overflow-hidden bg-transparent px-5 pb-36 pt-10 sm:px-8 sm:pb-48 sm:pt-14 lg:px-12 lg:pb-48 lg:pt-16 xl:px-20"
       id="rates"
     >
       <div className="relative z-10 mx-auto w-full max-w-[1220px]">

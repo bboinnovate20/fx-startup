@@ -65,9 +65,9 @@ export default function FxDashboard({
             providers={quotedProviders}
           />
         </div>
-        <main>
+        <main className="relative z-20">
           <div
-            className={`max-w-[1000px] m-[auto] p-[55px_18px_67px] max-[700px]:p-[39px_15px_47px]`}
+            className="mx-auto -mt-20 max-w-[1000px] px-[18px] pb-[67px] pt-3 max-[700px]:-mt-10 max-[700px]:px-[15px] max-[700px]:pb-[47px] max-[700px]:pt-2"
           >
             {/* Each section gets its own 24px side gutter, plus 24px of extra
                 top padding between sections (margins alone would collapse). */}
