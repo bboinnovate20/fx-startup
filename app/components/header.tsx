@@ -44,7 +44,7 @@ export function Header({
     <header className="sticky top-0 z-50 h-[74px] text-white max-[700px]:h-16">
       <div
         aria-hidden="true"
-        className={`site-header-surface night-sky pointer-events-none absolute inset-0 -z-10 ${!blend || scrolled ? "is-solid" : ""}`}
+        className={`site-header-surface bg-primary/80 backdrop-blur-sm pointer-events-none absolute inset-0 -z-10 ${!blend || scrolled ? "is-solid" : ""}`}
       />
       <div className="relative mx-auto flex h-full w-full max-w-360 items-center gap-6 px-6 sm:px-8 lg:px-12 2xl:px-25 max-[700px]:gap-3 max-[700px]:px-4">
         <Brand />
@@ -55,7 +55,7 @@ export function Header({
         >
           {links.map(([label, href]) => (
             <a href={href} key={href}>
-              <ButtonBadge className="border border-white/30 bg-white/10 text-white transition-colors duration-150 hover:bg-primary-hover hover:text-white">
+              <ButtonBadge className="border border-white/30 bg-white text-black! transition-colors duration-150 hover:bg-primary-hover hover:text-white!">
                 {label}
               </ButtonBadge>
             </a>

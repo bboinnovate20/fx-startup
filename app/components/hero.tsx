@@ -272,19 +272,19 @@ export function Hero({
       <div className="relative z-10 mx-auto w-full max-w-[1220px]">
         <div className="lg:grid lg:grid-cols-[1fr_414px] lg:items-center lg:gap-16 xl:grid-cols-[1fr_450px] xl:gap-24">
           {/* Left column: headline + provider rate cards */}
-          <div className="mb-10 text-center lg:mb-0 lg:max-w-[560px] lg:text-left">
-            <motion.span
+          <div className="mb-10 lg:-mt-15 text-center lg:mb-0 lg:max-w-[560px] lg:text-left">
+            {/* <motion.span
               className="block font-display text-[14px] font-semibold uppercase tracking-wider text-[#c4b5fd] sm:text-[16px]"
               initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
             >
               Smart currency exchange
-            </motion.span>
+            </motion.span> */}
 
             <h1 className="relative mb-0 mt-4 font-hegarty text-[24px] font-normal leading-[1.05] tracking-tight text-white sm:text-[36px] lg:text-[48px] xl:text-[44px]">
               <motion.span
-                className="block"
+                className="block text-[30px] sm:text-[36px] lg:text-[48px] xl:text-[44px]"
                 aria-hidden="true"
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}

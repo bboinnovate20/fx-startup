@@ -47,6 +47,7 @@ export function Converter({
   compact?: boolean;
 }) {
   const loading = status === "loading";
+  const unavailable = !loading && (status === "unavailable" || rate === null);
   const [editingAmount, setEditingAmount] = useState(false);
   const [editingTarget, setEditingTarget] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
@@ -98,9 +99,9 @@ export function Converter({
           <a
             href="#trend"
             className={`mx-auto inline-flex ${compact ? "mt-2 min-h-9 text-[14px]" : "mt-2 min-h-10 text-[13px] sm:mt-2.5 sm:min-h-[45px] sm:text-[15px]"} max-w-full items-center gap-2 rounded-full bg-[#eef0ec] px-3.5 font-semibold tracking-[-0.02em] text-[#171a18] transition-colors hover:bg-[#e4e8e1] sm:px-5`}
-            aria-label={`${rate === null ? `Exchange rate unavailable for ${from} to ${to}` : `1 ${from} equals ${number(rate, 4)} ${to}`}. View rate history`}
+            aria-label={`${unavailable ? `Exchange rate unavailable for ${from} to ${to}` : `1 ${from} equals ${number(rate ?? 0, 4)} ${to}`}. View rate history`}
           >
-            <span className="whitespace-nowrap">1 {from} = {rate === null ? "—" : number(rate, 4)} {to}</span>
+            <span className="whitespace-nowrap">{unavailable ? "Not available" : `1 ${from} = ${number(rate ?? 0, 4)} ${to}`}</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-1 h-4 w-4 shrink-0 text-[#171a18]">
               <path d="m7 4 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -223,7 +224,7 @@ export function Converter({
         />
       )}
       {showAsk && !loading && <FxAsk from={from} to={to} amount={amount} />}
-      {!loading && (
+      {!loading && !unavailable && (
         <p className={`mb-0 text-center font-medium text-[#5c6560] ${compact ? "mt-2 text-[11px]" : "mt-2.5 text-[12px]"}`}>
           Normal exchange rate. Extra charges applied.
         </p>

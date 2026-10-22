@@ -58,7 +58,7 @@ export function AlertForm({
         </label>
         <div
           className={`relative mt-2 flex w-full min-w-0 items-center gap-1 sm:gap-[10px] [&_.currency-picker]:min-w-0 [&_.currency-picker]:flex-1 [&_.currency-picker]:border-0 [&_.currency-picker]:bg-white [&_.currency-picker]:h-14 [&_.currency-picker]:max-w-full
-            [&_.currency-picker>button]:min-w-0 [&_.currency-picker>button]:gap-1.5 [&_.currency-picker>button]:px-1.5 sm:[&_.currency-picker>button]:px-2 [&_.currency-picker>button]:text-[14px] [&_.currency-picker>button>span]:min-w-0 [&_.currency-picker>button>span]:overflow-hidden [&_.currency-picker>button>span>span]:max-w-full [&_.currency-picker>button>img]:h-6 [&_.currency-picker>button>img]:w-6 sm:[&_.currency-picker>button>img]:h-8 sm:[&_.currency-picker>button>img]:w-8 [&>_span]:text-[#9aa5b4] [&>_span]:text-[11px]`}
+            [&_.currency-picker>button]:min-w-0 [&_.currency-picker>button]:justify-start [&_.currency-picker>button]:gap-1.5 [&_.currency-picker>button]:pl-4 [&_.currency-picker>button]:pr-2.5 sm:[&_.currency-picker>button]:pl-5 sm:[&_.currency-picker>button]:pr-3 [&_.currency-picker>button]:text-[13px] [&_.currency-picker>button>span]:min-w-0 [&_.currency-picker>button>span]:overflow-hidden [&_.currency-picker>button>span>span]:max-w-full [&_.currency-picker>button>span>span:first-child]:text-[13px] [&_.currency-picker>button>span>span:last-child]:text-[10px] [&_.currency-picker>button>img]:h-5 [&_.currency-picker>button>img]:w-5 sm:[&_.currency-picker>button>img]:h-6 sm:[&_.currency-picker>button>img]:w-6 [&_.currency-picker>button>svg]:h-3 [&_.currency-picker>button>svg]:w-3 [&>_span]:text-[#9aa5b4] [&>_span]:text-[11px]`}
         >
           <CurrencyPicker
             value={from}
