@@ -4,6 +4,7 @@ import { AnimatePresence, MotionConfig, motion, type Transition } from "motion/r
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AlertForm } from "./alert-form";
+import { AskDock } from "./fx-ask";
 import { ChatAttachment, ChatSkeletonCard, RateChatCard } from "./ask-chat-cards";
 import Loader from "./loading-icon";
 import { currencyList, number, type Currency } from "./data/fx-data";
@@ -364,6 +365,7 @@ export default function AskExperience({
 
   return (
     <MotionConfig reducedMotion="user">
+      <AskDock from={from} to={to} amount={amount} />
       <main className={`bg-[#f7f6fc] font-display text-[#19182c] ${textAnswer ? "min-h-screen" : "grid min-h-screen lg:h-[calc(100svh-74px)] lg:min-h-0 lg:grid-cols-[minmax(320px,36%)_minmax(0,1fr)] lg:overflow-hidden"}`}>
         <section className={`flex min-h-screen min-w-0 flex-col border-[#e2def3] bg-white ${textAnswer ? "mx-auto w-full max-w-2xl" : "border-b lg:h-full lg:min-h-0 lg:border-b-0 lg:border-r"}`} aria-label="Ask FX Swift">
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#eeedf4] px-4 sm:px-5">

@@ -5,6 +5,7 @@ import type { Currency } from "./data/fx-data";
 import type { ProviderInfo } from "./data/providers";
 import { useFxMarket } from "../lib/use-fx-market";
 import type { RateHistoryPeriod } from "./ui/rate-history-chart";
+import { AskDock } from "./fx-ask";
 import { Header } from "./header";
 import { Hero } from "./hero";
 import { ProviderComparison } from "./provider-comparison";
@@ -51,6 +52,7 @@ export default function FxDashboard({
   return (
     <>
       <Header blend />
+      <AskDock from={from} to={to} amount={amount} />
       <div className="overflow-hidden" id="top">
         <div className="night-sky relative -mt-[74px] pt-[74px] max-[700px]:-mt-16 max-[700px]:pt-16">
           <WaveBand />

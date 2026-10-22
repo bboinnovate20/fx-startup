@@ -136,13 +136,13 @@ export function Converter({
         </div>
       )}
 
-      <div className={`relative z-[1] flex items-center ${compact ? "h-10" : "h-10 sm:h-[47px]"} justify-center`} aria-label="Swap source and target currencies">
+      <div className="relative z-[1] flex h-4 items-center justify-center" aria-label="Swap source and target currencies">
         <button
           type="button"
           aria-label="Swap currencies"
           onClick={swapCurrencies}
           disabled={loading}
-          className={`grid place-items-center rounded-full ${compact ? "h-9 w-9" : "h-9 w-9 sm:h-10 sm:w-10"} border-0 bg-transparent transition hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50`}
+          className={`mt-4 grid place-items-center rounded-full ${compact ? "h-7 w-7" : "h-7 w-7 sm:h-8 sm:w-8"} border-0 bg-transparent transition hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50`}
         >
           <span
             aria-hidden="true"
@@ -155,7 +155,7 @@ export function Converter({
         </button>
       </div>
 
-      <label htmlFor="receive-amount" className="mb-1 block text-[11px] font-medium text-[#343b33]">Converted to</label>
+      <label htmlFor="receive-amount" className="mb-0.5 block text-[11px] font-medium leading-4 text-[#343b33]">Converted to</label>
       {loading ? (
         <div
           className={`skeleton-shimmer w-full rounded-full ${compact ? "min-h-12" : "min-h-[47px] sm:min-h-[58px]"}`}
@@ -223,7 +223,7 @@ export function Converter({
           setTo={setTo}
         />
       )}
-      {showAsk && !loading && <FxAsk from={from} to={to} amount={amount} />}
+      {showAsk && !loading && <FxAsk />}
       {!loading && !unavailable && (
         <p className={`mb-0 text-center font-medium text-[#5c6560] ${compact ? "mt-2 text-[11px]" : "mt-2.5 text-[12px]"}`}>
           Normal exchange rate. Extra charges applied.

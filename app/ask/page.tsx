@@ -35,7 +35,7 @@ export default async function AskPage({ searchParams }: { searchParams: SearchPa
 
   return (
     <>
-      <Header askHref="#ask-follow-up" startTarget="rates" />
+      <Header startTarget="rates" />
       <AskExperience
         initialFrom={from}
         initialTo={to}

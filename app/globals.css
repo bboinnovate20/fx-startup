@@ -35,6 +35,8 @@
   --toast-blur: 2px;
   --toast-scale: 0.97;
   --toast-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --resize-dur: 300ms;
+  --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --modal-open-dur: 250ms;
   --modal-close-dur: 150ms;
   --modal-scale: 0.96;
@@ -417,4 +419,30 @@
 @media (prefers-reduced-motion: reduce) {
   .t-modal { transition: none !important; }
   .t-modal-backdrop { transition: none !important; }
+}
+
+.t-resize {
+  transition:
+    width  var(--resize-dur) var(--resize-ease),
+    height var(--resize-dur) var(--resize-ease);
+  will-change: width, height;
+}
+
+.t-ask-fade {
+  opacity: 0;
+  transition: opacity var(--resize-dur) var(--resize-ease);
+}
+.t-ask-fade.is-open {
+  opacity: 1;
+}
+.t-resize.t-ask-fade {
+  transition:
+    width var(--resize-dur) var(--resize-ease),
+    height var(--resize-dur) var(--resize-ease),
+    opacity var(--resize-dur) var(--resize-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-resize { transition: none !important; }
+  .t-ask-fade { transition: none !important; }
 }
