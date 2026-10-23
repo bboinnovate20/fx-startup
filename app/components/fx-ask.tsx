@@ -92,7 +92,7 @@ export function AskDock({ from, to, amount }: { from: Currency; to: Currency; am
   if (!mounted || !open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[70] flex items-end justify-center px-4 pb-4 sm:pb-6">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center px-4 pb-[41px] sm:pb-[49px]">
       <button
         type="button"
         aria-label="Close ask"
@@ -101,7 +101,7 @@ export function AskDock({ from, to, amount }: { from: Currency; to: Currency; am
       />
       <form
         onSubmit={handleSubmit}
-        className={`t-resize t-ask-fade relative z-[1] flex h-14 items-center gap-2 rounded-full border border-[#d9d3f5] bg-white px-4 shadow-[0_16px_40px_rgba(18,16,40,0.18)] ${shown ? "is-open w-[min(540px,calc(100vw-32px))]" : "w-[min(240px,calc(100vw-96px))]"}`}
+        className={`t-resize t-ask-fade relative z-[1] flex flex-col justify-between overflow-hidden rounded-[22px] border border-[#d9d3f5] bg-white px-3.5 py-3 shadow-[0_16px_40px_rgba(18,16,40,0.18)] ${shown ? "is-open h-[128px] w-[min(540px,calc(100vw-32px))]" : "h-14 w-[min(240px,calc(100vw-96px))]"}`}
       >
         <label htmlFor={inputId} className="sr-only">Ask about this rate</label>
         <input
@@ -110,16 +110,36 @@ export function AskDock({ from, to, amount }: { from: Currency; to: Currency; am
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           placeholder="Ask about this rate…"
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] text-[#17152c] outline-none placeholder:text-[#77758b]"
+          className="h-10 w-full min-w-0 border-0 bg-transparent p-0 text-[15px] text-[#17152c] outline-none placeholder:text-[#77758b]"
         />
-        <button
-          type="submit"
-          aria-label="Send question"
-          disabled={!question.trim()}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-0 bg-primary text-white transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <img src="/icons/arrow-up-right.svg" alt="" aria-hidden="true" className="h-3.5 w-3.5 brightness-0 invert" />
-        </button>
+        <div className="flex items-center gap-2">
+          <div
+            className="flex min-w-0 flex-1 flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="group"
+            aria-label="Suggested questions"
+          >
+            {suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => {
+                  setQuestion(suggestion);
+                  inputRef.current?.focus();
+                }}
+                className="min-h-8 shrink-0 whitespace-nowrap rounded-full border border-[#d9d3f5] bg-[#f7f6fc] px-2.5 text-[12px] text-[#17152c] transition-colors hover:bg-[#efebff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+          <button
+            type="submit"
+            disabled={!question.trim()}
+            className="h-9 shrink-0 rounded-full border-0 bg-primary px-4 text-[14px] font-semibold text-white transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Send
+          </button>
+        </div>
       </form>
     </div>,
     document.body,
