@@ -207,7 +207,7 @@ export function Header({
                   <img
                     src="/icons/cancel-2.svg"
                     alt=""
-                    className="h-3.5 w-3.5 object-contain brightness-0 invert"
+                    className="h-[13px] w-[13px] object-contain brightness-0 invert"
                   />
                 </span>
               </span>
@@ -223,19 +223,44 @@ export function Header({
             aria-label="Mobile navigation"
             data-open={open ? "true" : "false"}
             inert={!open}
-            className="t-mobile-menu fixed inset-0 z-[75] hidden flex-col justify-between overflow-y-auto bg-[#070312] px-6 pb-8 pt-3.5 text-white max-[700px]:flex"
+            className="t-mobile-menu fixed inset-0 z-[75] hidden flex-col justify-between overflow-y-auto bg-[#070312] px-6 pb-8 pt-2.5 text-white max-[700px]:flex"
           >
             <div>
-              <div className="flex h-12 items-center justify-between">
+              <div className="flex h-11 items-center justify-between">
                 <div onClick={close}>
                   <Brand />
                 </div>
                 <button
                   type="button"
+                  aria-label="Close navigation"
                   onClick={close}
-                  className="border-0 bg-transparent px-1 py-2 font-display text-[13px] font-semibold tracking-[0.16em] text-white/90 uppercase transition-colors hover:text-white"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-0 bg-transparent text-white transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.96]"
                 >
-                  CLOSE
+                  <span
+                    className="t-icon-swap h-5 w-5"
+                    data-state={open ? "b" : "a"}
+                  >
+                    <span
+                      className="t-icon grid h-5 w-5 place-items-center"
+                      data-icon="a"
+                    >
+                      <img
+                        src="/icons/menu.svg"
+                        alt=""
+                        className="h-[19px] w-[19px] object-contain brightness-0 invert"
+                      />
+                    </span>
+                    <span
+                      className="t-icon grid h-5 w-5 place-items-center"
+                      data-icon="b"
+                    >
+                      <img
+                        src="/icons/cancel-2.svg"
+                        alt=""
+                        className="h-[13px] w-[13px] object-contain brightness-0 invert"
+                      />
+                    </span>
+                  </span>
                 </button>
               </div>
 
@@ -256,7 +281,7 @@ export function Header({
                           if (item.action === "alerts") openRateAlert();
                           if (item.action === "ask") openAsk();
                         }}
-                        className="border-0 bg-transparent p-0 text-left font-display text-[34px] font-semibold leading-[1.15] tracking-[-0.035em] text-white transition-colors hover:text-white/70"
+                        className="border-0 bg-transparent p-0 text-left font-display text-[33px] font-semibold leading-[1.15] tracking-[-0.035em] text-white transition-colors hover:text-white/70"
                       >
                         {item.label}
                       </button>
@@ -264,7 +289,7 @@ export function Header({
                       <a
                         href={item.href}
                         onClick={close}
-                        className="block font-display text-[34px] font-semibold leading-[1.15] tracking-[-0.035em] text-white transition-colors hover:text-white/70"
+                        className="block font-display text-[33px] font-semibold leading-[1.15] tracking-[-0.035em] text-white transition-colors hover:text-white/70"
                       >
                         {item.label}
                       </a>
@@ -288,7 +313,7 @@ export function Header({
                   close();
                   openAuthDialog();
                 }}
-                className="flex h-13 w-full items-center justify-center gap-2.5 rounded-full border-0 bg-white px-6 font-display text-[15px] font-semibold text-[#090319] transition hover:bg-white/90 active:scale-[0.99]"
+                className="flex h-12 w-full items-center justify-center gap-2.5 rounded-full border-0 bg-white px-6 font-display text-[14px] font-semibold text-[#090319] transition hover:bg-white/90 active:scale-[0.99]"
               >
                 {user ? `Signed in as ${user.name}` : "Sign in"}
               </button>
@@ -300,7 +325,7 @@ export function Header({
                     .getElementById(startTarget)
                     ?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="flex h-13 w-full items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-6 font-display text-[15px] font-semibold text-white transition hover:bg-white/[0.14] active:scale-[0.99]"
+                className="flex h-12 w-full items-center justify-center rounded-full border border-white/10 bg-white/[0.08] px-6 font-display text-[14px] font-semibold text-white transition hover:bg-white/[0.14] active:scale-[0.99]"
               >
                 Get started
               </button>
