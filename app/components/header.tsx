@@ -207,7 +207,7 @@ export function Header({
                   <img
                     src="/icons/cancel-2.svg"
                     alt=""
-                    className="h-[13px] w-[13px] object-contain brightness-0 invert"
+                    className="h-3.5 w-3.5 object-contain brightness-0 invert"
                   />
                 </span>
               </span>
@@ -247,7 +247,7 @@ export function Header({
                       <img
                         src="/icons/menu.svg"
                         alt=""
-                        className="h-[19px] w-[19px] object-contain brightness-0 invert"
+                        className="h-5 w-5 object-contain brightness-0 invert"
                       />
                     </span>
                     <span
@@ -257,7 +257,7 @@ export function Header({
                       <img
                         src="/icons/cancel-2.svg"
                         alt=""
-                        className="h-[13px] w-[13px] object-contain brightness-0 invert"
+                        className="h-3.5 w-3.5 object-contain brightness-0 invert"
                       />
                     </span>
                   </span>
