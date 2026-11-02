@@ -13,11 +13,14 @@ export const OAUTH_STATE_COOKIE = "fx_oauth_state";
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
+const DEFAULT_GOOGLE_CLIENT_ID =
+  "151269083825-feai7q30iofbomhlq71fs3hluj28asu7.apps.googleusercontent.com";
+
 function getAuthSecret(): string {
   return (
     process.env.AUTH_SECRET ||
     process.env.GOOGLE_CLIENT_SECRET ||
-    "fx-swift-dev-secret-change-in-prod"
+    "fx-swift-session-signing-key-v1"
   );
 }
 
@@ -25,7 +28,7 @@ export function getGoogleConfig(origin: string) {
   const clientId =
     process.env.GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    "";
+    DEFAULT_GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || "";
   const redirectUri =
     process.env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/google/callback`;
@@ -33,7 +36,7 @@ export function getGoogleConfig(origin: string) {
     clientId: clientId.trim(),
     clientSecret: clientSecret.trim(),
     redirectUri: redirectUri.trim(),
-    configured: Boolean(clientId.trim() && clientSecret.trim()),
+    configured: Boolean(clientId.trim()),
   };
 }
 

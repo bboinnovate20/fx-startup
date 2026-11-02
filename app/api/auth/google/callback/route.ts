@@ -6,6 +6,7 @@ import {
   SESSION_COOKIE,
   SESSION_COOKIE_MAX_AGE,
 } from "../../../../lib/auth";
+import { fxApiOrigin } from "../../../../lib/fx-api-origin";
 
 type GoogleTokenResponse = {
   access_token?: string;
@@ -19,6 +20,53 @@ type GoogleUserInfo = {
   name?: string;
   picture?: string;
 };
+
+async function exchangeDirect(
+  clientId: string,
+  clientSecret: string,
+  code: string,
+  verifier: string,
+  redirectUri: string,
+): Promise<GoogleUserInfo | null> {
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      code_verifier: verifier,
+      grant_type: "authorization_code",
+      redirect_uri: redirectUri,
+    }),
+  });
+  const tokenData = (await tokenRes.json()) as GoogleTokenResponse;
+  if (!tokenRes.ok || !tokenData.access_token) return null;
+
+  const userRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    headers: { Authorization: `Bearer ${tokenData.access_token}` },
+  });
+  if (!userRes.ok) return null;
+  return (await userRes.json()) as GoogleUserInfo;
+}
+
+async function exchangeViaBackend(
+  code: string,
+  verifier: string,
+  redirectUri: string,
+): Promise<GoogleUserInfo | null> {
+  const res = await fetch(`${fxApiOrigin()}/api/v1/auth/google/exchange`, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({
+      code,
+      codeVerifier: verifier,
+      redirectUri,
+    }),
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as GoogleUserInfo;
+}
 
 export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin;
@@ -65,34 +113,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        code,
-        code_verifier: verifier,
-        grant_type: "authorization_code",
-        redirect_uri: config.redirectUri,
-      }),
-    });
+    const userInfo = config.clientSecret
+      ? await exchangeDirect(
+          config.clientId,
+          config.clientSecret,
+          code,
+          verifier,
+          config.redirectUri,
+        )
+      : await exchangeViaBackend(code, verifier, config.redirectUri);
 
-    const tokenData = (await tokenRes.json()) as GoogleTokenResponse;
-    if (!tokenRes.ok || !tokenData.access_token) {
-      const failUrl = new URL(returnTo, origin);
-      failUrl.searchParams.set("auth", "error");
-      return clearStateCookie(NextResponse.redirect(failUrl));
-    }
-
-    const userRes = await fetch(
-      "https://openidconnect.googleapis.com/v1/userinfo",
-      {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
-      },
-    );
-    const userInfo = (await userRes.json()) as GoogleUserInfo;
-    if (!userRes.ok || !userInfo.sub || !userInfo.email) {
+    if (!userInfo || !userInfo.sub || !userInfo.email) {
       const failUrl = new URL(returnTo, origin);
       failUrl.searchParams.set("auth", "error");
       return clearStateCookie(NextResponse.redirect(failUrl));
