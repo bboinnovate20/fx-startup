@@ -132,42 +132,18 @@ function ProviderRateCards({
   bestId: string | null;
   loading?: boolean;
 }) {
-  const prefersReducedMotion = useReducedMotion();
-  const [introduced, setIntroduced] = useState(false);
   const top3 = quotes.filter((provider): provider is PlatformRow & { payout: number } =>
     provider.available && provider.payout != null,
   ).slice(0, 3);
-  useEffect(() => {
-    if (introduced || top3.length === 0) return;
-    const timeout = window.setTimeout(() => setIntroduced(true), 900);
-    return () => window.clearTimeout(timeout);
-  }, [introduced, top3.length]);
   if (top3.length === 0) return null;
   const highlighted = top3.some((provider) => provider.id === bestId) ? bestId : top3[0].id;
 
   return (
-    <motion.div
-      className="mt-7 space-y-2 text-left"
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.3, margin: "0px 0px -40px 0px" }}
-    >
-      {top3.map((provider, i) => (
-        <motion.div
+    <div className="mt-7 space-y-2 text-left">
+      {top3.map((provider) => (
+        <div
           key={provider.id}
-          custom={i}
-          initial={introduced ? false : undefined}
-          variants={{
-            hidden: prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -16 },
-            visible: (custom: number) => ({
-              opacity: 1,
-              x: 0,
-              transition: prefersReducedMotion
-                ? { duration: 0 }
-                : { duration: 0.38, ease, delay: 0.3 + custom * 0.1 },
-            }),
-          }}
-          className={`flex items-center gap-3 rounded-[14px] px-3.5 py-2.5 ${
+          className={`flex items-center gap-3 rounded-[14px] px-3.5 py-2.5 transition-colors duration-200 ${
             provider.id === highlighted ? "bg-primary" : "bg-[#f5f4fa]"
           }`}
         >
@@ -214,27 +190,18 @@ function ProviderRateCards({
             ) : null}
             {loading ? <span className="glass-shimmer" aria-hidden="true" /> : null}
           </span>
-        </motion.div>
+        </div>
       ))}
-      <motion.a
+      <a
         href="#compare"
-        variants={{
-          hidden: prefersReducedMotion ? { opacity: 1 } : { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: prefersReducedMotion
-              ? { duration: 0 }
-              : { duration: 0.3, ease, delay: 0.62 },
-          },
-        }}
         className="flex items-center gap-1 pt-1 text-[12px] font-semibold text-white transition-opacity hover:opacity-75"
       >
         Compare all providers
         <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0">
           <path d="m7 4 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </motion.a>
-    </motion.div>
+      </a>
+    </div>
   );
 }
 

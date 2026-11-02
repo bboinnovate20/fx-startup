@@ -21,15 +21,13 @@ export function AlertForm({
   headingId?: string;
 }) {
   const [target, setTarget] = useState("2050");
-  const [low, setLow] = useState("2000");
-  const [high, setHigh] = useState("2050");
-  const [mode, setMode] = useState<"range" | "threshold">("range");
   const [channel, setChannel] = useState<Alert["channel"]>("Telegram");
   const [notice, setNotice] = useState("");
   const [telegramLink, setTelegramLink] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const channelName = useId();
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (from === to) {
@@ -38,8 +36,8 @@ export function AlertForm({
       setTelegramLink("");
       return;
     }
-    if (mode === "range" && Number(low) >= Number(high)) {
-      setError("The range start must be lower than the range end.");
+    if (!target.trim() || !(Number(target) > 0)) {
+      setError("Enter a target rate greater than zero.");
       setNotice("");
       setTelegramLink("");
       return;
@@ -47,45 +45,48 @@ export function AlertForm({
     setError("");
     setTelegramLink("");
     if (channel !== "Telegram") {
-      setNotice(
-        `Alert created. Connect ${channel} to enable delivery.`,
-      );
+      setNotice(`Alert created. Connect ${channel} to enable delivery.`);
       return;
     }
     setNotice("");
     setPending(true);
-    void createAlert(
-      mode === "range"
-        ? { pair: { from, to }, mode: "range", min: low, max: high }
-        : { pair: { from, to }, mode: "threshold", target },
-    )
+    void createAlert({ pair: { from, to }, mode: "threshold", target })
       .then((result) => {
         setTelegramLink(result.telegramLink);
       })
       .catch((reason: unknown) => {
         setError(
-          reason instanceof Error ? reason.message : "The rate service is unavailable.",
+          reason instanceof Error
+            ? reason.message
+            : "The rate service is unavailable.",
         );
       })
       .finally(() => {
         setPending(false);
       });
   }
+
   return (
     <div
-      className={compact ? "rounded-[16px] border border-[#e4e1ef] bg-surface p-4 font-display" : "border border-[var(--line)] rounded-[14px] bg-surface p-6 font-display max-[900px]:p-5 max-[700px]:p-[18px]"}
+      className={
+        compact
+          ? "rounded-[16px] border border-[#e4e1ef] bg-surface p-4 font-display"
+          : "border border-[var(--line)] rounded-[14px] bg-surface p-6 font-display max-[900px]:p-5 max-[700px]:p-[18px]"
+      }
     >
       <div
         className={`flex items-center gap-3 ${compact ? "mb-3" : "mb-5"} [&_h3]:text-[18px] [&_h3]:text-navy [&_h3]:m-[0] [&_h3]:tracking-[-0.02em]
           [&_small]:block [&_small]:text-[12px] [&_small]:text-[#64748b] [&_small]:mt-1`}
       >
         <span>
-          <h3 id={headingId} className={compact ? "text-[18px]!" : "text-2xl!"}>Create alert</h3>
-          <small>Choose the rate you want to watch.</small>
+          <h3 id={headingId} className={compact ? "text-[18px]!" : "text-2xl!"}>
+            Create alert
+          </h3>
+          <small>Get notified when the rate reaches your target.</small>
         </span>
       </div>
       <form onSubmit={submit}>
-        <label className={`block text-[#64748b] text-[12px] font-semibold`}>
+        <label className="block text-[#64748b] text-[12px] font-semibold">
           Currency pair
         </label>
         <div
@@ -108,101 +109,36 @@ export function AlertForm({
             anchor="row"
           />
         </div>
-        <fieldset
-          className={`border-0 m-[12px_0_0] p-[0] [&_legend]:p-[0] [&_legend]:mb-[6px] grid grid-cols-[1fr_1fr] gap-[7px]
-            [&_legend]:col-[1/-1]`}
-        >
-          <legend className={`block text-[#171a18] text-[12px] font-semibold`}>
-            Trigger when the rate
-          </legend>
-          <button
-            type="button"
-            aria-pressed={mode === "range"}
-            onClick={() => setMode("range")}
-            className={`relative flex w-full items-center gap-[10px] rounded-[9px] border bg-white p-3 text-left cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out max-[900px]:p-[10px] max-[900px]:gap-2 max-[700px]:p-3 ${mode === "range" ? "border-primary bg-[#f7f8ff] shadow-[0_0_0_2px_color-mix(in_srgb,var(--blue)_10%,transparent)]" : "border-[#e5eaf0]"}`}
-          >
-            <span>
-              <p className="m-0 text-[12px] font-medium text-[#171a18]">Enters a range</p>
-              <small className="mt-1 block text-[10px] text-[#64748b]">Notify me within a rate range</small>
-            </span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "threshold"}
-            onClick={() => setMode("threshold")}
-            className={`relative flex w-full items-center gap-[10px] rounded-[9px] border bg-white p-3 text-left cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out max-[900px]:p-[10px] max-[900px]:gap-2 max-[700px]:p-3 ${mode === "threshold" ? "border-primary bg-[#f7f8ff] shadow-[0_0_0_2px_color-mix(in_srgb,var(--blue)_10%,transparent)]" : "border-[#e5eaf0]"}`}
-          >
-            <span>
-              <p className="m-0 text-[12px] font-medium text-[#171a18]">Reaches a threshold</p>
-              <small className="mt-1 block text-[10px] text-[#64748b]">Notify me at or above a rate</small>
-            </span>
-          </button>
-        </fieldset>
+
         <div className="mt-[12px]">
-          {mode === "threshold" ? (
-            <label className={`block text-[#171a18] text-[12px] font-semibold`}>
-              Target rate
-              <div
-                className={`flex items-center gap-2 h-11 p-[0_10px] border border-[#d7dee8] rounded-[8px] mt-2
-                  [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
-                  [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
-              >
-                <input
-                  required
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={target}
-                  onChange={(event) => setTarget(event.target.value)}
-                />
-              </div>
-            </label>
-          ) : (
-            <div className={`grid grid-cols-[1fr_1fr] gap-[8px]`}>
-              <label className={`block text-[#171a18] text-[12px] font-semibold`}>
-                Range from
-                <div
-                  className={`flex items-center gap-2 h-11 p-[0_10px] border border-[#d7dee8] rounded-[8px] mt-2
-                    [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
-                    [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
-                >
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={low}
-                    onChange={(event) => setLow(event.target.value)}
-                  />
-                </div>
-              </label>
-              <label className={`block text-[#171a18] text-[12px] font-semibold`}>
-                Range to
-                <div
-                  className={`flex items-center gap-2 h-11 p-[0_10px] border border-[#d7dee8] rounded-[8px] mt-2
-                    [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
-                    [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
-                >
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={high}
-                    onChange={(event) => setHigh(event.target.value)}
-                  />
-                </div>
-              </label>
+          <label className="block text-[#171a18] text-[12px] font-semibold">
+            Target rate (1 {from} in {to})
+            <div
+              className={`flex items-center gap-2 h-11 p-[0_12px] border border-[#d7dee8] bg-white rounded-[8px] mt-2
+                [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
+                [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
+            >
+              <input
+                required
+                type="number"
+                min="0"
+                step="any"
+                value={target}
+                onChange={(event) => setTarget(event.target.value)}
+              />
+              <span>{to}</span>
             </div>
-          )}
+          </label>
+          <small className="mt-1.5 block text-[11px] text-[#64748b]">
+            Notify me when 1 {from} reaches or goes above this rate.
+          </small>
         </div>
-        <fieldset
-          className={`border-0 m-[12px_0_0] p-[0] [&_legend]:p-[0] [&_legend]:mb-[6px] mt-[12px]`}
-        >
-          <legend className={`block text-[#171a18] text-[12px] font-semibold`}>
+
+        <fieldset className="border-0 m-[12px_0_0] p-[0] [&_legend]:p-[0] [&_legend]:mb-[6px] mt-[12px]">
+          <legend className="block text-[#171a18] text-[12px] font-semibold">
             Notification channel
           </legend>
-          <div className={`flex gap-[7px]`}>
+          <div className="flex gap-[7px]">
             <label
               className={
                 channel === "Telegram"
@@ -218,7 +154,12 @@ export function AlertForm({
                 checked={channel === "Telegram"}
                 onChange={() => setChannel("Telegram")}
               />
-              <img src="/icons/telegram.svg" alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
+              <img
+                src="/icons/telegram.svg"
+                alt=""
+                aria-hidden="true"
+                className="h-5 w-5 object-contain"
+              />
               Telegram
             </label>
             <label
@@ -236,11 +177,16 @@ export function AlertForm({
                 checked={channel === "WhatsApp"}
                 onChange={() => setChannel("WhatsApp")}
               />
-              <img src="/icons/whatsapp.svg" alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
+              <img
+                src="/icons/whatsapp.svg"
+                alt=""
+                aria-hidden="true"
+                className="h-5 w-5 object-contain"
+              />
               WhatsApp
             </label>
           </div>
-          <small className={`block text-[#64748b] text-[10px] mt-2`}>
+          <small className="block text-[#64748b] text-[10px] mt-2">
             You’ll need to connect and authorize your channel before delivery.
           </small>
         </fieldset>
@@ -254,7 +200,7 @@ export function AlertForm({
         </Button>
         {error && (
           <p
-            className={`m-[10px_0_0] p-[10px_12px] rounded-[7px] bg-[#fff0f0] text-[#b42332] text-[12px] leading-[1.5]`}
+            className="m-[10px_0_0] p-[10px_12px] rounded-[7px] bg-[#fff0f0] text-[#b42332] text-[12px] leading-[1.5]"
             role="alert"
           >
             {error}
@@ -262,7 +208,7 @@ export function AlertForm({
         )}
         {(notice || telegramLink) && (
           <p
-            className={`m-[10px_0_0] p-[10px_12px] rounded-[7px] bg-[#edf8f2] text-[#467660] text-[12px] leading-[1.5]`}
+            className="m-[10px_0_0] p-[10px_12px] rounded-[7px] bg-[#edf8f2] text-[#467660] text-[12px] leading-[1.5]"
             role="status"
           >
             {telegramLink ? (
@@ -282,8 +228,13 @@ export function AlertForm({
             )}
           </p>
         )}
-        <p className={`mt-[10px] mb-0 flex items-center justify-center gap-1.5 text-center text-[#64748b] text-[10px]`}>
-          <img src="/icons/lock.svg" alt="" aria-hidden="true" className="h-3 w-[10px] shrink-0 object-contain" />
+        <p className="mt-[10px] mb-0 flex items-center justify-center gap-1.5 text-center text-[#64748b] text-[10px]">
+          <img
+            src="/icons/lock.svg"
+            alt=""
+            aria-hidden="true"
+            className="h-3 w-[10px] shrink-0 object-contain"
+          />
           Your contact details stay private and secure.
         </p>
       </form>
