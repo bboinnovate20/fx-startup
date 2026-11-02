@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { currencies, formatAmount, money, number, roundAmount, visibleDigits, type Currency } from "./data/fx-data";
 import type { MarketStatus, PlatformRow } from "../lib/use-fx-market";
+import { openRateAlert } from "./rate-alert-dialog";
 import { ArrowIcon } from "./ui/ArrowIcon";
 import { SectionHeading } from "./ui/SectionHeading";
 
@@ -263,9 +264,13 @@ export function ProviderComparison({
           <p className="m-0 text-[13px] leading-relaxed text-navy">
             <strong className="font-semibold">Want a better rate?</strong>{" "}
           </p>
-          <a href="#alerts" className="shrink-0 rounded-full bg-primary px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-hover">
+          <button
+            type="button"
+            onClick={openRateAlert}
+            className="shrink-0 rounded-full border-0 bg-primary px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-hover"
+          >
             Set an alert
-          </a>
+          </button>
         </motion.div>
       )}
           <AnimatePresence>

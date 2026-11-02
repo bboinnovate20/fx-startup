@@ -3,7 +3,7 @@ import type { MarketStatus } from "../lib/use-fx-market";
 import { CurrencyPicker } from "./currency-picker";
 import { number, type Currency } from "./data/fx-data";
 import { FxAsk } from "./fx-ask";
-import { RateAlertDialog } from "./rate-alert-dialog";
+import { RateAlertDialog, subscribeRateAlertOpen } from "./rate-alert-dialog";
 
 function plainAmount(value: number) {
   if (!Number.isFinite(value)) return "";
@@ -59,6 +59,11 @@ export function Converter({
       setTargetDraft(receive === null ? "" : number(receive, 2));
     }
   }, [editingTarget, receive]);
+
+  useEffect(() => {
+    if (compact) return;
+    return subscribeRateAlertOpen(() => setAlertOpen(true));
+  }, [compact]);
 
   function commitAmount(raw: string) {
     const parsed = Number(raw.replaceAll(",", ""));

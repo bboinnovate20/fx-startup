@@ -249,6 +249,7 @@ export function Hero({
   quotes,
   bestId = null,
   status = "ready",
+  quotesStatus = "loading",
 }: {
   from: Currency;
   to: Currency;
@@ -260,6 +261,7 @@ export function Hero({
   quotes: PlatformRow[];
   bestId?: string | null;
   status?: "loading" | "ready" | "unavailable";
+  quotesStatus?: "loading" | "ready" | "unavailable";
   providers?: ProviderInfo[];
 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -305,7 +307,7 @@ export function Hero({
             </motion.p>
 
             <div className="hidden lg:block">
-              <ProviderRateCards to={to} quotes={quotes} bestId={bestId} loading={status === "loading"} />
+              <ProviderRateCards to={to} quotes={quotes} bestId={bestId} loading={quotesStatus === "loading"} />
             </div>
           </div>
 
@@ -323,7 +325,7 @@ export function Hero({
           {/* <div className="mt-6">
             <MobileProviderTicker providers={providers} />
           </div> */}
-          <ProviderRateCards to={to} quotes={quotes} bestId={bestId} loading={status === "loading"} />
+          <ProviderRateCards to={to} quotes={quotes} bestId={bestId} loading={quotesStatus === "loading"} />
         </div>
       </div>
     </section>

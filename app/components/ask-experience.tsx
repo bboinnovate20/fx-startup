@@ -348,7 +348,7 @@ export default function AskExperience({
             rate={rate}
             quotes={market.quotes}
             bestId={market.bestId}
-            status={market.status}
+            status={market.quotesStatus}
             message={market.message}
             compact
             showInput={false}
@@ -444,7 +444,7 @@ export default function AskExperience({
                             rate={rate}
                             quotes={market.quotes}
                             bestId={market.bestId}
-                            status={market.status}
+                            status={market.quotesStatus}
                             message={market.message}
                             compact
                             showInput={false}

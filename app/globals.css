@@ -382,26 +382,31 @@
 
 .t-modal {
   transform-origin: center;
-  transform: scale(var(--modal-scale));
+  transform: translateY(14px) scale(var(--modal-scale));
   opacity: 0;
+  filter: blur(2px);
   pointer-events: none;
   transition:
     transform var(--modal-open-dur) var(--modal-ease),
-    opacity   var(--modal-open-dur) var(--modal-ease);
-  will-change: transform, opacity;
+    opacity   var(--modal-open-dur) var(--modal-ease),
+    filter    var(--modal-open-dur) var(--modal-ease);
+  will-change: transform, opacity, filter;
 }
 .t-modal.is-open {
-  transform: scale(1);
+  transform: translateY(0) scale(1);
   opacity: 1;
+  filter: blur(0);
   pointer-events: auto;
 }
 .t-modal.is-closing {
-  transform: scale(var(--modal-scale-close));
+  transform: translateY(10px) scale(var(--modal-scale-close));
   opacity: 0;
+  filter: blur(2px);
   pointer-events: none;
   transition:
     transform var(--modal-close-dur) var(--modal-ease),
-    opacity   var(--modal-close-dur) var(--modal-ease);
+    opacity   var(--modal-close-dur) var(--modal-ease),
+    filter    var(--modal-close-dur) var(--modal-ease);
 }
 
 .t-modal-backdrop {

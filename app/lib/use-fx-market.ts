@@ -101,6 +101,7 @@ export function useFxMarket(
   const [unitQuotes, setUnitQuotes] = useState<UnitQuote[]>([]);
   const [quotePair, setQuotePair] = useState<string | null>(null);
   const [status, setStatus] = useState<MarketStatus>("loading");
+  const [quotesStatus, setQuotesStatus] = useState<MarketStatus>("loading");
   const [message, setMessage] = useState<string | null>(null);
   const [comparisonExpanded, setComparisonExpanded] = useState(false);
   const [expandingComparison, setExpandingComparison] = useState(false);
@@ -111,6 +112,7 @@ export function useFxMarket(
     const controller = new AbortController();
     expandAbort.current?.abort();
     setStatus("loading");
+    setQuotesStatus("loading");
     setRate(null);
     setRatePair(null);
     setUnitQuotes([]);
@@ -119,48 +121,78 @@ export function useFxMarket(
     setComparisonExpanded(false);
     setExpandingComparison(false);
 
-    void (async () => {
-      const logos = await providerLogos(controller.signal);
-      if (controller.signal.aborted) return;
+    const logos = providerLogos(controller.signal);
+    const collected: UnitQuote[] = [];
+    let platformsSettled = false;
+    let liveSettled = false;
 
-      const [rateResult, comparisonResult] = await Promise.allSettled([
-        getRate(from, to, controller.signal),
-        compareProviders(from, to, "1", controller.signal, compareLimit),
-      ]);
+    const publishQuotes = () => {
       if (controller.signal.aborted) return;
+      setUnitQuotes(collected.slice());
+      setQuotePair(`${from}:${to}`);
+      if (collected.length > 0 || (platformsSettled && liveSettled)) {
+        setQuotesStatus(collected.length > 0 ? "ready" : "unavailable");
+      }
+    };
 
-      if (rateResult.status === "fulfilled") {
-        setRate(numberOrNull(rateResult.value.rate));
+    const takeQuotes = (comparison: FxComparison, directory: Map<string, ProviderInfo>) => {
+      const incoming = unitQuotesFromComparison(comparison, directory);
+      const seen = new Set(collected.map((row) => row.id));
+      for (const row of incoming) {
+        const index = collected.findIndex((item) => item.id === row.id);
+        if (index >= 0) collected[index] = row;
+        else if (!seen.has(row.id)) collected.push(row);
+      }
+      publishQuotes();
+    };
+
+    void getRate(from, to, controller.signal)
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        setRate(numberOrNull(result.rate));
         setRatePair(`${from}:${to}`);
         setStatus("ready");
         setMessage(null);
-      } else {
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (controller.signal.aborted) return;
         setRate(null);
         setRatePair(`${from}:${to}`);
         setStatus("unavailable");
-        setMessage(
-          rateResult.reason instanceof Error
-            ? rateResult.reason.message
-            : "This pair is not available yet.",
-        );
-      }
+        setMessage(error instanceof Error ? error.message : "This pair is not available yet.");
+      });
 
-      if (comparisonResult.status === "fulfilled") {
-        setUnitQuotes(unitQuotesFromComparison(comparisonResult.value, logos));
+    void (async () => {
+      try {
+        const directory = await logos;
+        const comparison = await compareProviders(from, to, "1", controller.signal, undefined, "platforms");
+        if (controller.signal.aborted) return;
+        platformsSettled = true;
+        takeQuotes(comparison, directory);
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        platformsSettled = true;
+        publishQuotes();
       }
-      setQuotePair(`${from}:${to}`);
-    })().catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      if (!controller.signal.aborted) {
-        setRatePair(`${from}:${to}`);
-        setQuotePair(`${from}:${to}`);
-        setStatus("unavailable");
-        setMessage("The rate service is unavailable.");
+    })();
+
+    void (async () => {
+      try {
+        const directory = await logos;
+        const comparison = await compareProviders(from, to, "1", controller.signal, undefined, "live");
+        if (controller.signal.aborted) return;
+        liveSettled = true;
+        takeQuotes(comparison, directory);
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        liveSettled = true;
+        publishQuotes();
       }
-    });
+    })();
 
     return () => controller.abort();
-  }, [compareLimit, from, to]);
+  }, [from, to]);
 
   const expandComparison = useCallback(() => {
     if (compareLimit == null || comparisonExpanded || expandingComparison) return;
@@ -246,7 +278,8 @@ export function useFxMarket(
     return { quotes: ordered, bestId: best?.id ?? null };
   }, [amount, unitQuotes]);
 
-  const pairReady = ratePair === pair && quotePair === pair;
+  const rateReady = ratePair === pair;
+  const quotesReady = quotePair === pair;
   const historyReady = historyKey === `${pair}:${period}`;
   const historyStatus: MarketStatus = !historyReady
     ? "loading"
@@ -259,10 +292,11 @@ export function useFxMarket(
     history: historyReady ? history : null,
     historySource: historyReady ? historySource : null,
     historyStatus,
-    quotes: quotePair === pair ? quotes : [],
-    bestId: quotePair === pair ? bestId : null,
-    status: pairReady ? status : "loading",
-    message: pairReady ? message : null,
+    quotes: quotesReady ? quotes : [],
+    bestId: quotesReady ? bestId : null,
+    status: rateReady ? status : "loading",
+    quotesStatus: quotesReady ? quotesStatus : "loading",
+    message: rateReady ? message : null,
     comparisonExpanded,
     expandingComparison,
     expandComparison,

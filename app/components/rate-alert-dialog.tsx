@@ -5,6 +5,17 @@ import { createPortal } from "react-dom";
 import { AlertForm } from "./alert-form";
 import type { Currency } from "./data/fx-data";
 
+const openAlertEvent = "fx-open-rate-alert";
+
+export function openRateAlert() {
+  window.dispatchEvent(new CustomEvent(openAlertEvent));
+}
+
+export function subscribeRateAlertOpen(onOpen: () => void) {
+  window.addEventListener(openAlertEvent, onOpen);
+  return () => window.removeEventListener(openAlertEvent, onOpen);
+}
+
 function closeDuration() {
   const raw = getComputedStyle(document.documentElement).getPropertyValue("--modal-close-dur");
   const ms = parseFloat(raw);

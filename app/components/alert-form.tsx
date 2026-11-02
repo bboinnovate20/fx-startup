@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
+import { createAlert } from "../lib/fx-api";
 import { Button } from "./ui/Button";
 import { CurrencyPicker } from "./currency-picker";
 import type { Alert, Currency } from "./data/fx-data";
@@ -25,19 +26,50 @@ export function AlertForm({
   const [mode, setMode] = useState<"range" | "threshold">("range");
   const [channel, setChannel] = useState<Alert["channel"]>("Telegram");
   const [notice, setNotice] = useState("");
+  const [telegramLink, setTelegramLink] = useState("");
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const channelName = useId();
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (mode === "range" && Number(low) > Number(high)) {
+    if (from === to) {
+      setError("Choose two different currencies.");
+      setNotice("");
+      setTelegramLink("");
+      return;
+    }
+    if (mode === "range" && Number(low) >= Number(high)) {
       setError("The range start must be lower than the range end.");
       setNotice("");
+      setTelegramLink("");
       return;
     }
     setError("");
-    setNotice(
-      `Alert created. Connect ${channel} to enable delivery.`,
-    );
+    setTelegramLink("");
+    if (channel !== "Telegram") {
+      setNotice(
+        `Alert created. Connect ${channel} to enable delivery.`,
+      );
+      return;
+    }
+    setNotice("");
+    setPending(true);
+    void createAlert(
+      mode === "range"
+        ? { pair: { from, to }, mode: "range", min: low, max: high }
+        : { pair: { from, to }, mode: "threshold", target },
+    )
+      .then((result) => {
+        setTelegramLink(result.telegramLink);
+      })
+      .catch((reason: unknown) => {
+        setError(
+          reason instanceof Error ? reason.message : "The rate service is unavailable.",
+        );
+      })
+      .finally(() => {
+        setPending(false);
+      });
   }
   return (
     <div
@@ -106,28 +138,27 @@ export function AlertForm({
             </span>
           </button>
         </fieldset>
-        <div
-          className={`grid grid-cols-[1fr_1.2fr] gap-[8px] mt-[12px] [&.single]:grid-cols-[1fr] ${mode === "threshold" ? "single" : ""}`}
-        >
-          <label className={`block text-[#171a18] text-[12px] font-semibold`}>
-            Target rate
-            <div
-              className={`flex items-center gap-2 h-11 p-[0_10px] border border-[#d7dee8] rounded-[8px] mt-2
-                [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
-                [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
-            >
-              <input
-                required
-                type="number"
-                min="0"
-                step="any"
-                value={target}
-                onChange={(event) => setTarget(event.target.value)}
-              />
-            </div>
-          </label>
-          {mode === "range" && (
-            <div className={`grid grid-cols-[1fr_1fr] gap-[6px]`}>
+        <div className="mt-[12px]">
+          {mode === "threshold" ? (
+            <label className={`block text-[#171a18] text-[12px] font-semibold`}>
+              Target rate
+              <div
+                className={`flex items-center gap-2 h-11 p-[0_10px] border border-[#d7dee8] rounded-[8px] mt-2
+                  [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
+                  [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
+              >
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={target}
+                  onChange={(event) => setTarget(event.target.value)}
+                />
+              </div>
+            </label>
+          ) : (
+            <div className={`grid grid-cols-[1fr_1fr] gap-[8px]`}>
               <label className={`block text-[#171a18] text-[12px] font-semibold`}>
                 Range from
                 <div
@@ -215,9 +246,10 @@ export function AlertForm({
         </fieldset>
         <Button
           type="submit"
-          className={`mt-4 w-full rounded-full text-[14px] [&_span]:ml-[auto] [&_span]:text-[16px] px-5 font-medium! ${compact ? "h-11" : "h-12 py-7"}`}
+          disabled={pending}
+          className={`mt-4 w-full rounded-full text-[14px] [&_span]:ml-[auto] [&_span]:text-[16px] px-5 font-medium! disabled:cursor-not-allowed disabled:opacity-60 ${compact ? "h-11" : "h-12 py-7"}`}
         >
-          Create alert
+          {pending ? "Creating alert…" : "Create alert"}
           <ArrowIcon className="h-4 w-4" />
         </Button>
         {error && (
@@ -228,12 +260,26 @@ export function AlertForm({
             {error}
           </p>
         )}
-        {notice && (
+        {(notice || telegramLink) && (
           <p
             className={`m-[10px_0_0] p-[10px_12px] rounded-[7px] bg-[#edf8f2] text-[#467660] text-[12px] leading-[1.5]`}
             role="status"
           >
-            {notice}
+            {telegramLink ? (
+              <>
+                Alert created.{" "}
+                <a
+                  href={telegramLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold underline"
+                >
+                  Open Telegram to turn on this alert.
+                </a>
+              </>
+            ) : (
+              notice
+            )}
           </p>
         )}
         <p className={`mt-[10px] mb-0 flex items-center justify-center gap-1.5 text-center text-[#64748b] text-[10px]`}>

@@ -62,6 +62,7 @@ export default function FxDashboard({
             quotes={market.quotes}
             bestId={market.bestId}
             status={market.status}
+            quotesStatus={market.quotesStatus}
             providers={quotedProviders}
           />
         </div>
@@ -80,7 +81,7 @@ export default function FxDashboard({
                 rate={market.rate}
                 quotes={market.quotes}
                 bestId={market.bestId}
-                status={market.status}
+                status={market.quotesStatus}
                 message={market.message}
                 previewCount={3}
                 viewAllOpen={market.comparisonExpanded}

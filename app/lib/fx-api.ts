@@ -56,6 +56,17 @@ export type FxAskResponse = {
   } | null;
 };
 
+export type FxAlertInput = { pair: FxPair } & (
+  | { mode: "range"; min: string; max: string }
+  | { mode: "threshold"; target: string }
+);
+
+export type FxAlertCreated = {
+  id: string;
+  status: "pending";
+  telegramLink: string;
+};
+
 type AskMessage = { role: "user" | "assistant"; content: string };
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -104,6 +115,7 @@ export function compareProviders(
   amount: string | undefined,
   signal?: AbortSignal,
   limit?: number,
+  scope?: "all" | "platforms" | "live",
 ) {
   return fetch(
     `/fx-api/api/v1/rates/compare?${query({
@@ -111,6 +123,7 @@ export function compareProviders(
       to,
       amount,
       limit: limit == null ? undefined : String(limit),
+      scope,
     })}`,
     { signal },
   ).then((response) => readJson<FxComparison>(response));
@@ -140,4 +153,17 @@ export function askFx(
       ...(input.presentation === "text" ? { presentation: "text" } : {}),
     }),
   }).then((response) => readJson<FxAskResponse>(response));
+}
+
+export function createAlert(input: FxAlertInput, signal?: AbortSignal) {
+  return fetch("/fx-api/api/v1/alerts", {
+    method: "POST",
+    signal,
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify(
+      input.mode === "range"
+        ? { pair: input.pair, mode: "range", min: input.min, max: input.max }
+        : { pair: input.pair, mode: "threshold", target: input.target },
+    ),
+  }).then((response) => readJson<FxAlertCreated>(response));
 }
