@@ -301,6 +301,44 @@
   .t-panel-slide { transition: none !important; }
 }
 
+.t-mobile-menu {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.99);
+  filter: blur(4px);
+  pointer-events: none;
+  transition:
+    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform, filter;
+}
+.t-mobile-menu[data-open="true"] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  pointer-events: auto;
+}
+
+.t-mobile-menu-item {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 340ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 150ms ease;
+}
+.t-mobile-menu[data-open="true"] .t-mobile-menu-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-mobile-menu,
+  .t-mobile-menu-item {
+    transition: none !important;
+  }
+}
+
 .t-icon-swap {
   position: relative;
   display: inline-grid;
