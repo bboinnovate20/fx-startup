@@ -56,9 +56,13 @@ export type FxAskResponse = {
   } | null;
 };
 
-export type FxAlertInput = { pair: FxPair } & (
+export type FxAlertInput = {
+  pair: FxPair;
+  email?: string;
+} & (
   | { mode: "range"; min: string; max: string }
   | { mode: "threshold"; target: string }
+  | { mode: "daily" }
 );
 
 export type FxAlertCreated = {
@@ -156,14 +160,17 @@ export function askFx(
 }
 
 export function createAlert(input: FxAlertInput, signal?: AbortSignal) {
+  const email = input.email?.trim() || undefined;
   return fetch("/fx-api/api/v1/alerts", {
     method: "POST",
     signal,
     headers: { "content-type": "application/json", accept: "application/json" },
     body: JSON.stringify(
       input.mode === "range"
-        ? { pair: input.pair, mode: "range", min: input.min, max: input.max }
-        : { pair: input.pair, mode: "threshold", target: input.target },
+        ? { pair: input.pair, mode: "range", min: input.min, max: input.max, email }
+        : input.mode === "daily"
+          ? { pair: input.pair, mode: "daily", email }
+          : { pair: input.pair, mode: "threshold", target: input.target, email },
     ),
   }).then((response) => readJson<FxAlertCreated>(response));
 }

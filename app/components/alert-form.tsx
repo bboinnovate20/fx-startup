@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { createAlert } from "../lib/fx-api";
 import { Button } from "./ui/Button";
 import { CurrencyPicker } from "./currency-picker";
@@ -21,12 +21,29 @@ export function AlertForm({
   headingId?: string;
 }) {
   const [target, setTarget] = useState("2050");
+  const [mode, setMode] = useState<"threshold" | "daily">("threshold");
+  const [email, setEmail] = useState("");
   const [channel, setChannel] = useState<Alert["channel"]>("Telegram");
   const [notice, setNotice] = useState("");
   const [telegramLink, setTelegramLink] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const channelName = useId();
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { user?: { email?: string } | null } | null) => {
+        if (!active || !data?.user?.email) return;
+        const sessionEmail = data.user.email;
+        setEmail((prev) => prev || sessionEmail);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,7 +53,7 @@ export function AlertForm({
       setTelegramLink("");
       return;
     }
-    if (!target.trim() || !(Number(target) > 0)) {
+    if (mode === "threshold" && (!target.trim() || !(Number(target) > 0))) {
       setError("Enter a target rate greater than zero.");
       setNotice("");
       setTelegramLink("");
@@ -50,7 +67,11 @@ export function AlertForm({
     }
     setNotice("");
     setPending(true);
-    void createAlert({ pair: { from, to }, mode: "threshold", target })
+    void createAlert(
+      mode === "daily"
+        ? { pair: { from, to }, mode: "daily", email }
+        : { pair: { from, to }, mode: "threshold", target, email },
+    )
       .then((result) => {
         setTelegramLink(result.telegramLink);
       })
@@ -82,7 +103,7 @@ export function AlertForm({
           <h3 id={headingId} className={compact ? "text-[18px]!" : "text-2xl!"}>
             Create alert
           </h3>
-          <small>Get notified when the rate reaches your target.</small>
+          <small>Choose the rate you want to watch.</small>
         </span>
       </div>
       <form onSubmit={submit}>
@@ -110,29 +131,94 @@ export function AlertForm({
           />
         </div>
 
-        <div className="mt-[12px]">
-          <label className="block text-[#171a18] text-[12px] font-semibold">
-            Target rate (1 {from} in {to})
-            <div
-              className={`flex items-center gap-2 h-11 p-[0_12px] border border-[#d7dee8] bg-white rounded-[8px] mt-2
-                [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
-                [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
-            >
-              <input
-                required
-                type="number"
-                min="0"
-                step="any"
-                value={target}
-                onChange={(event) => setTarget(event.target.value)}
-              />
-              <span>{to}</span>
-            </div>
-          </label>
-          <small className="mt-1.5 block text-[11px] text-[#64748b]">
-            Notify me when 1 {from} reaches or goes above this rate.
-          </small>
-        </div>
+        <fieldset className="border-0 m-[12px_0_0] p-[0] [&_legend]:p-[0] [&_legend]:mb-[6px] grid grid-cols-[1fr_1fr] gap-[7px] [&_legend]:col-[1/-1]">
+          <legend className="block text-[#171a18] text-[12px] font-semibold">
+            Trigger when the rate
+          </legend>
+          <button
+            type="button"
+            aria-pressed={mode === "threshold"}
+            onClick={() => setMode("threshold")}
+            className={`relative flex w-full items-center gap-[10px] rounded-[9px] border bg-white p-3 text-left cursor-pointer transition-[background-color,border-color,box-shadow] duration-200 ease-out max-[900px]:p-[10px] max-[900px]:gap-2 max-[700px]:p-3 ${
+              mode === "threshold"
+                ? "border-primary bg-[#f7f8ff] shadow-[0_0_0_2px_color-mix(in_srgb,var(--blue)_10%,transparent)]"
+                : "border-[#e5eaf0]"
+            }`}
+          >
+            <span>
+              <p className="m-0 text-[12px] font-medium text-[#171a18]">
+                Reaches a target
+              </p>
+              <small className="mt-1 block text-[10px] text-[#64748b]">
+                Notify once &amp; remove
+              </small>
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={mode === "daily"}
+            onClick={() => setMode("daily")}
+            className={`relative flex w-full items-center gap-[10px] rounded-[9px] border bg-white p-3 text-left cursor-pointer transition-[background-color,border-color,box-shadow] duration-200 ease-out max-[900px]:p-[10px] max-[900px]:gap-2 max-[700px]:p-3 ${
+              mode === "daily"
+                ? "border-primary bg-[#f7f8ff] shadow-[0_0_0_2px_color-mix(in_srgb,var(--blue)_10%,transparent)]"
+                : "border-[#e5eaf0]"
+            }`}
+          >
+            <span>
+              <p className="m-0 text-[12px] font-medium text-[#171a18]">
+                7-day daily alert
+              </p>
+              <small className="mt-1 block text-[10px] text-[#64748b]">
+                Daily high/low for 1 week
+              </small>
+            </span>
+          </button>
+        </fieldset>
+
+        {mode === "threshold" ? (
+          <div className="mt-[12px]">
+            <label className="block text-[#171a18] text-[12px] font-semibold">
+              Target rate (1 {from} in {to})
+              <div
+                className={`flex items-center gap-2 h-11 p-[0_12px] border border-[#d7dee8] bg-white rounded-[8px] mt-2
+                  [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[18px] [&_input]:font-semibold
+                  [&_input]:p-[0] [&_span]:text-[11px] [&_span]:text-[#64748b] [&_span]:whitespace-nowrap`}
+              >
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={target}
+                  onChange={(event) => setTarget(event.target.value)}
+                />
+                <span>{to}</span>
+              </div>
+            </label>
+          </div>
+        ) : (
+          <div className="mt-[12px]">
+            <label className="block text-[#171a18] text-[12px] font-semibold">
+              Email for 7-day renewal reminder
+              <div
+                className={`flex items-center gap-2 h-11 p-[0_12px] border border-[#d7dee8] bg-white rounded-[8px] mt-2
+                  [&_input]:w-[100%] [&_input]:min-w-[0] [&_input]:border-0 [&_input]:outline-none [&_input]:shadow-none [&_input]:bg-transparent [&_input]:text-[#171a18] [&_input]:text-[13px] [&_input]:font-medium
+                  [&_input]:p-[0]`}
+              >
+                <input
+                  required
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </div>
+            </label>
+            <small className="mt-1.5 block text-[10px] text-[#64748b]">
+              We’ll alert you daily when {from}/{to} moves higher or lower, then email you after 7 days to resubscribe.
+            </small>
+          </div>
+        )}
 
         <fieldset className="border-0 m-[12px_0_0] p-[0] [&_legend]:p-[0] [&_legend]:mb-[6px] mt-[12px]">
           <legend className="block text-[#171a18] text-[12px] font-semibold">
