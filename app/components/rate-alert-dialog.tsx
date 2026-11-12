@@ -29,6 +29,7 @@ export function RateAlertDialog({
   to,
   setFrom,
   setTo,
+  initialTarget,
 }: {
   open: boolean;
   onClose: () => void;
@@ -36,6 +37,8 @@ export function RateAlertDialog({
   to: Currency;
   setFrom: (value: Currency) => void;
   setTo: (value: Currency) => void;
+  /** A target the agent suggested; the user still confirms the alert. */
+  initialTarget?: string;
 }) {
   const headingId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -119,7 +122,7 @@ export function RateAlertDialog({
             <path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
           </svg>
         </button>
-        <AlertForm from={from} to={to} setFrom={setFrom} setTo={setTo} compact headingId={headingId} />
+        <AlertForm from={from} to={to} setFrom={setFrom} setTo={setTo} compact headingId={headingId} initialTarget={initialTarget} />
       </div>
     </div>,
     document.body,

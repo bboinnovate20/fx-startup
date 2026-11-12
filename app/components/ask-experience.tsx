@@ -1,49 +1,76 @@
 "use client";
 
 import { AnimatePresence, MotionConfig, motion, type Transition } from "motion/react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { AlertForm } from "./alert-form";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { AskDock } from "./fx-ask";
-import { ChatAttachment, ChatSkeletonCard, RateChatCard } from "./ask-chat-cards";
+import { ChatAttachment, ChatSkeletonCard } from "./ask-chat-cards";
 import Loader from "./loading-icon";
 import { currencyList, number, type Currency } from "./data/fx-data";
 import directory from "../../public/data/providers.json";
+import { surfaceIdOf, useFxSurfaces, type SurfacePress } from "../a2ui/use-surfaces";
 import { assignAskVariant, rememberAskVariant, type AskVariant } from "../lib/ask-variant";
-import { askFx } from "../lib/fx-api";
+import { askFx, type FxPair } from "../lib/fx-api";
 import { recentConversations } from "../lib/recent-conversations";
 import { linkProviderNames, type ProviderLink } from "./linked-answer";
+import { RateAlertDialog } from "./rate-alert-dialog";
 import { useFxMarket } from "../lib/use-fx-market";
-import { ProviderComparison } from "./provider-comparison";
-import { TrendSection } from "./trend-section";
 import type { RateHistoryPeriod } from "./ui/rate-history-chart";
 
-type Message = { id: number; role: "user" | "assistant" | "system"; text: string; panel?: Panel };
-type Panel = "rate" | "chart" | "providers" | "alert";
+// `a2ui` is the turn's A2UI batch, kept so a restored session redraws its cards.
+type Message = { id: number; role: "user" | "assistant" | "system"; text: string; a2ui?: unknown[] };
 type Status = "idle" | "thinking";
+type TurnContext = { pair?: { from: Currency; to: Currency }; amount?: string; range?: "1d" | "1w" };
+
+// The A2UI SDK touches browser globals on import, so cards render client-only.
+const SurfaceView = dynamic(() => import("../a2ui/surface-view"), { ssr: false });
 
 const suggestions = ["What about EUR?", "Show 24 hours", "Cheapest provider?"];
-const panels: Panel[] = ["rate", "chart", "providers", "alert"];
-const sessionKey = "fx-ask-session-v1";
+const sessionKey = "fx-ask-session-v2";
 const workspaceDelay = 650;
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const enter: Transition = { duration: 0.32, ease };
-const reorder: Transition = { type: "spring", bounce: 0, visualDuration: 0.45 };
 
-function focusFromApi(focus: string | undefined): Panel | null {
-  if (focus === "chart") return "chart";
-  if (focus === "providers") return "providers";
-  if (focus === "alert") return "alert";
-  if (focus === "rate" || focus === "converter") return "rate";
-  return null;
+function asPair(value: unknown): { from: Currency; to: Currency } | undefined {
+  const pair = value as FxPair | undefined;
+  if (!pair || !currencyList.includes(pair.from as Currency) || !currencyList.includes(pair.to as Currency)) return undefined;
+  return { from: pair.from as Currency, to: pair.to as Currency };
 }
 
-function focusFor(question: string): Panel {
-  if (/provider|cheapest/i.test(question)) return "providers";
-  if (/trend|history|time/i.test(question)) return "chart";
-  if (/alert|target/i.test(question)) return "alert";
-  return "rate";
+const desktopQuery = "(min-width: 1024px)";
+
+/** Whether the workspace column is showing (Tailwind's `lg`). */
+function useDesktop() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const media = window.matchMedia(desktopQuery);
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(desktopQuery).matches,
+    () => false,
+  );
+}
+
+/** A press on an A2UI card, as the question and context of the next turn. */
+function turnFromPress(press: SurfacePress): { text: string; context: TurnContext } | null {
+  const context = press.context ?? {};
+  const pair = asPair(context.pair);
+  if (press.name === "set_range" && (context.range === "1d" || context.range === "1w")) {
+    return {
+      text: context.range === "1d" ? "Show the last 24 hours" : "Show the last week",
+      context: { pair, range: context.range },
+    };
+  }
+  if (press.name === "set_pair" && pair) {
+    return { text: `Show ${pair.from} to ${pair.to}`, context: { pair } };
+  }
+  if (press.name === "set_amount" && typeof context.amount === "string" && pair) {
+    return { text: `Compare providers for ${context.amount} ${pair.from}`, context: { pair, amount: context.amount } };
+  }
+  return null;
 }
 
 function TypingIndicator() {
@@ -107,7 +134,6 @@ export default function AskExperience({
   const [to, setTo] = useState(initialTo);
   const [amount, setAmount] = useState(initialAmount);
   const [historyPeriod, setHistoryPeriod] = useState<RateHistoryPeriod>("week");
-  const [focus, setFocus] = useState<Panel>(focusFor(initialQuestion));
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([{ id: 1, role: "user", text: initialQuestion }]);
   const [status, setStatus] = useState<Status>("thinking");
@@ -116,9 +142,9 @@ export default function AskExperience({
   const [variant, setVariant] = useState<AskVariant | null>(initialVariant);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const amountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const surfaces = useFxSurfaces();
+  const desktop = useDesktop();
   const market = useFxMarket(from, to, amount, historyPeriod);
-  const rate = market.rate;
   const contextKey = `${initialFrom}:${initialTo}:${initialAmount}:${initialQuestion}`;
   const providerLinks = useMemo<ProviderLink[]>(() => {
     const byName = new Map<string, string>();
@@ -130,16 +156,20 @@ export default function AskExperience({
     }
     return [...byName].map(([name, url]) => ({ name, url }));
   }, [market.quotes]);
-  // The rate, chart, provider, and alert cards are turned off. The thread
-  // answers in text only. Restore the cards with `variant === "panels"`.
-  const textAnswer = true;
-  const showPanels = false;
+  // The "panels" arm draws the agent's A2UI cards; the "text" arm answers in
+  // the thread only.
+  const showPanels = variant === "panels";
+  const textAnswer = !showPanels;
+  const latestSurfaceId = [...messages].reverse().map((message) => surfaceIdOf(message.a2ui)).find(Boolean);
+  const latestSurface = latestSurfaceId && surfaces?.get(latestSurfaceId) ? latestSurfaceId : undefined;
+  const [alert, setAlert] = useState<{ open: boolean; target?: string }>({ open: false });
 
+  // Every answer's cards, whether just received or restored from the session.
+  // Applying is idempotent: a surface that already exists is kept.
   useEffect(() => {
-    return () => {
-      if (amountTimerRef.current) clearTimeout(amountTimerRef.current);
-    };
-  }, []);
+    if (!surfaces) return;
+    for (const message of messages) surfaces.apply(message.a2ui);
+  }, [messages, surfaces]);
 
   useEffect(() => {
     const assigned = initialVariant ?? assignAskVariant();
@@ -162,7 +192,6 @@ export default function AskExperience({
           to?: Currency;
           amount?: string;
           historyPeriod?: RateHistoryPeriod;
-          focus?: Panel;
         };
         if (parsed.contextKey === contextKey && Array.isArray(parsed.messages) && parsed.messages.length > 1) {
           restored = true;
@@ -172,7 +201,6 @@ export default function AskExperience({
           const savedAmount = Number(parsed.amount);
           if (Number.isFinite(savedAmount) && savedAmount > 0 && savedAmount <= 1_000_000_000) setAmount(String(savedAmount));
           if (parsed.historyPeriod === "day" || parsed.historyPeriod === "week") setHistoryPeriod(parsed.historyPeriod);
-          if (parsed.focus && panels.includes(parsed.focus)) setFocus(parsed.focus);
         }
       }
     } catch {
@@ -193,14 +221,12 @@ export default function AskExperience({
         range: "1w",
         presentation: "panels",
       }, controller.signal).then((result) => {
-        const panel = focusFromApi(result.view?.focus) ?? focusFor(initialQuestion);
         if (result.view?.range === "1d") setHistoryPeriod("day");
-        setFocus(panel);
         setMessages((current) => [...current, {
           id: Date.now(),
           role: "assistant",
           text: result.response.text,
-          panel,
+          a2ui: result.a2ui,
         }]);
         setStatus("idle");
       }).catch((error: unknown) => {
@@ -209,7 +235,6 @@ export default function AskExperience({
           id: Date.now(),
           role: "assistant",
           text: error instanceof Error ? error.message : "The assistant is not available yet.",
-          panel: focusFor(initialQuestion),
         }]);
         setStatus("idle");
       });
@@ -231,39 +256,48 @@ export default function AskExperience({
         to,
         amount,
         historyPeriod,
-        focus,
       }));
     } catch {
       // Keep the current conversation usable when storage is disabled or full.
     }
-  }, [amount, contextKey, focus, from, historyPeriod, messages, sessionRestored, to]);
+  }, [amount, contextKey, from, historyPeriod, messages, sessionRestored, to]);
 
   useEffect(() => {
     const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
     messageEndRef.current?.scrollIntoView({ behavior, block: "end" });
   }, [messages, status]);
 
-  function appendMessage(role: Message["role"], text: string, panel?: Panel) {
-    setMessages((current) => [...current, { id: Date.now() + Math.random(), role, text, panel }]);
+  function appendMessage(role: Message["role"], text: string, a2ui?: unknown[]) {
+    setMessages((current) => [...current, { id: Date.now() + Math.random(), role, text, a2ui }]);
   }
 
-  function updateAmount(value: string) {
-    setAmount(value);
-    if (amountTimerRef.current) clearTimeout(amountTimerRef.current);
-    amountTimerRef.current = setTimeout(() => {
-      const numericValue = Number(value.replaceAll(",", ""));
-      if (Number.isFinite(numericValue) && numericValue > 0) {
-        appendMessage("system", `Amount updated to ${number(numericValue, 2)} ${from}.`);
+  // A press on a card is a new turn: its question, with the card's choice as
+  // context. The listener reads the latest render through a ref.
+  const pressRef = useRef<(press: SurfacePress) => void>(() => {});
+  useEffect(() => {
+    pressRef.current = (press) => {
+      // Opening the alert form is local: an alert only exists once the user confirms it.
+      if (press.name === "open_alert") {
+        const pair = asPair(press.context?.pair);
+        if (pair) {
+          setFrom(pair.from);
+          setTo(pair.to);
+        }
+        const target = press.context?.target;
+        setAlert({ open: true, target: typeof target === "string" ? target : undefined });
+        return;
       }
-    }, 900);
-  }
+      const turn = turnFromPress(press);
+      if (turn) submitQuestion(turn.text, turn.context);
+    };
+  });
+  useEffect(() => {
+    if (!surfaces) return;
+    surfaces.onPress((press) => pressRef.current(press));
+    return () => surfaces.onPress(null);
+  }, [surfaces]);
 
-  function updateHistoryPeriod(period: RateHistoryPeriod) {
-    setHistoryPeriod(period);
-    appendMessage("system", `Rate history changed to ${period === "day" ? "24 hours" : "1 week"}.`);
-  }
-
-  function submitQuestion(value: string) {
+  function submitQuestion(value: string, context: TurnContext = {}) {
     const text = value.trim();
     if (!text || status === "thinking") return;
     const history = messages.flatMap((message) =>
@@ -276,12 +310,11 @@ export default function AskExperience({
     setStatus("thinking");
     void askFx({
       messages: recentConversations(history, text),
-      pair: { from, to },
-      amount: amount.replaceAll(",", ""),
-      range: historyPeriod === "day" ? "1d" : "1w",
+      pair: context.pair ?? { from, to },
+      amount: context.amount ?? amount.replaceAll(",", ""),
+      range: context.range ?? (historyPeriod === "day" ? "1d" : "1w"),
       presentation: "panels",
     }).then((result) => {
-      const panel = focusFromApi(result.view?.focus) ?? "rate";
       if (result.view?.pair.from && currencyList.includes(result.view.pair.from as Currency)) {
         setFrom(result.view.pair.from as Currency);
       }
@@ -291,8 +324,7 @@ export default function AskExperience({
       if (result.view?.amount) setAmount(result.view.amount);
       if (result.view?.range === "1d") setHistoryPeriod("day");
       if (result.view?.range === "1w") setHistoryPeriod("week");
-      setFocus(panel);
-      appendMessage("assistant", result.response.text, panel);
+      appendMessage("assistant", result.response.text, result.a2ui);
       setStatus("idle");
       inputRef.current?.focus();
     }).catch((error: unknown) => {
@@ -308,59 +340,6 @@ export default function AskExperience({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     submitQuestion(question);
-  }
-
-  const panelOrder = panels.filter((panel) => panel !== "rate" && panel !== focus);
-  if (focus !== "rate") panelOrder.unshift(focus);
-
-  function renderPanel(panel: Panel) {
-    return (
-      <motion.div
-        key={panel}
-        layout="position"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ default: { ...enter, delay: panelOrder.indexOf(panel) * 0.06 }, layout: reorder }}
-        className={`rounded-[16px] ring-offset-2 ring-offset-[#f5f4fa] transition-shadow duration-300 ${
-          focus === panel ? "ring-2 ring-primary" : "ring-0 ring-transparent"
-        }`}
-      >
-        {panel === "chart" && (
-          <TrendSection
-            from={from}
-            to={to}
-            setFrom={setFrom}
-            setTo={setTo}
-            rate={rate}
-            history={market.history}
-            historySource={market.historySource}
-            historyPeriod={historyPeriod}
-            setHistoryPeriod={updateHistoryPeriod}
-            compact
-          />
-        )}
-        {panel === "providers" && (
-          <ProviderComparison
-            from={from}
-            to={to}
-            amount={amount}
-            setAmount={updateAmount}
-            rate={rate}
-            quotes={market.quotes}
-            bestId={market.bestId}
-            status={market.quotesStatus}
-            message={market.message}
-            compact
-            showInput={false}
-          />
-        )}
-        {panel === "alert" && (
-          <section className="rounded-[16px] bg-white" id="alerts">
-            <AlertForm from={from} to={to} setFrom={setFrom} setTo={setTo} compact />
-          </section>
-        )}
-      </motion.div>
-    );
   }
 
   return (
@@ -412,54 +391,20 @@ export default function AskExperience({
                   >
                     {linkProviderNames(message.text, providerLinks)}
                   </motion.p>
-                  {/* Mobile only: the workspace panel this answer produced, attached
-                      right under it, like an AI chat tool result. Desktop keeps the
-                      panel in the workspace column instead. The text arm skips this. */}
-                  {showPanels && message.role === "assistant" && message.panel && (
-                    <div className="space-y-2 lg:hidden">
-                      <RateChatCard from={from} to={to} rate={rate} focused={message.panel === "rate"} />
-                      {message.panel === "chart" && (
-                        <ChatAttachment focused>
-                          <TrendSection
-                            from={from}
-                            to={to}
-                            setFrom={setFrom}
-                            setTo={setTo}
-                            rate={rate}
-                            history={market.history}
-                            historySource={market.historySource}
-                            historyPeriod={historyPeriod}
-                            setHistoryPeriod={updateHistoryPeriod}
-                            compact
-                          />
+                  {/* Mobile only: the A2UI card this answer produced, attached
+                      right under it, like an AI chat tool result. Desktop shows
+                      the latest card in the workspace column instead, so inline
+                      cards are not mounted there (a hidden chart has no size). */}
+                  {showPanels && !desktop && message.role === "assistant" && (() => {
+                    const id = surfaceIdOf(message.a2ui);
+                    return surfaces && id && surfaces.get(id) ? (
+                      <div className="lg:hidden">
+                        <ChatAttachment>
+                          <SurfaceView store={surfaces} id={id} />
                         </ChatAttachment>
-                      )}
-                      {message.panel === "providers" && (
-                        <ChatAttachment focused>
-                          <ProviderComparison
-                            from={from}
-                            to={to}
-                            amount={amount}
-                            setAmount={updateAmount}
-                            rate={rate}
-                            quotes={market.quotes}
-                            bestId={market.bestId}
-                            status={market.quotesStatus}
-                            message={market.message}
-                            compact
-                            showInput={false}
-                          />
-                        </ChatAttachment>
-                      )}
-                      {message.panel === "alert" && (
-                        <ChatAttachment focused>
-                          <section className="rounded-[14px] bg-white" id="alerts">
-                            <AlertForm from={from} to={to} setFrom={setFrom} setTo={setTo} compact />
-                          </section>
-                        </ChatAttachment>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               ))}
               {showPanels && !workspaceReady && (
@@ -518,36 +463,23 @@ export default function AskExperience({
         >
           <div className="mx-auto max-w-[720px] [&_#trend]:!mb-0 [&_#compare]:!mb-0">
             <AnimatePresence mode="wait" initial={false}>
-              {!workspaceReady ? (
+              {!workspaceReady || (!latestSurface && status === "thinking") ? (
                 <WorkspaceSkeleton key="skeleton" />
               ) : (
                 <motion.div
-                  key="workspace"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  key={latestSurfaceId ?? "empty"}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={enter}
                   className="space-y-3"
                 >
-                  <section id="rates" className={`rounded-[16px] border border-[#e4e1ef] bg-white p-4 transition-shadow duration-300 ${focus === "rate" ? "ring-2 ring-primary ring-offset-2 ring-offset-[#f5f4fa]" : ""}`} aria-label="Current rate">
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#77758f]">
-                      <span>{from} → {to}</span>
-                      <span>Indicative market rate</span>
-                    </div>
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.p
-                        key={`${from}-${to}`}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ duration: 0.2, ease }}
-                        className="mb-0 mt-1 text-[22px] font-semibold leading-tight tracking-[-0.03em] text-[#1a192d] sm:text-[24px]"
-                      >
-                        1 {from} = {rate === null ? "—" : number(rate, rate < 10 ? 4 : 2)} {to}
-                      </motion.p>
-                    </AnimatePresence>
-                  </section>
-
-                  {panelOrder.map(renderPanel)}
+                  {surfaces && latestSurface ? (
+                    <SurfaceView store={surfaces} id={latestSurface} />
+                  ) : (
+                    <p className="rounded-[16px] border border-[#e4e1ef] bg-white p-4 text-[13px] text-[#77758f]">
+                      Ask about a rate, a trend or providers and the details appear here.
+                    </p>
+                  )}
                   <p className="pb-3 text-center text-[11px] text-[#77758f]">Indicative rates; provider rates and fees may vary.</p>
                 </motion.div>
               )}
@@ -555,6 +487,15 @@ export default function AskExperience({
           </div>
         </motion.section>}
       </main>
+      <RateAlertDialog
+        open={alert.open}
+        onClose={() => setAlert({ open: false })}
+        from={from}
+        to={to}
+        setFrom={setFrom}
+        setTo={setTo}
+        initialTarget={alert.target}
+      />
     </MotionConfig>
   );
 }

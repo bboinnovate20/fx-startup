@@ -54,6 +54,8 @@ export type FxAskResponse = {
     range: "1d" | "1w";
     focus: "rate" | "converter" | "chart" | "providers" | "alert";
   } | null;
+  /** The same panels as A2UI v1.0 messages; drawn with `app/a2ui`. */
+  a2ui?: unknown[];
 };
 
 export type FxAlertInput = {

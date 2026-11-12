@@ -29,7 +29,7 @@ function typedAmount(amount: string) {
   return value;
 }
 
-function platformLogo(id: string, logo: string | null | undefined, directoryLogo?: string) {
+export function platformLogo(id: string, logo: string | null | undefined, directoryLogo?: string) {
   if (logo?.startsWith("/api/")) return `/fx-api${logo}`;
   if (logo?.startsWith("platforms/")) {
     const platformId = logo.split("/")[1] || id;

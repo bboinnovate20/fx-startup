@@ -12,6 +12,7 @@ export function AlertForm({
   setTo,
   compact = false,
   headingId,
+  initialTarget,
 }: {
   from: Currency;
   to: Currency;
@@ -19,8 +20,10 @@ export function AlertForm({
   setTo: (value: Currency) => void;
   compact?: boolean;
   headingId?: string;
+  /** A target the agent prefilled; the user still confirms before an alert exists. */
+  initialTarget?: string;
 }) {
-  const [target, setTarget] = useState("2050");
+  const [target, setTarget] = useState(initialTarget ?? "2050");
   const [mode, setMode] = useState<"threshold" | "daily">("threshold");
   const [email, setEmail] = useState("");
   const [channel, setChannel] = useState<Alert["channel"]>("Telegram");

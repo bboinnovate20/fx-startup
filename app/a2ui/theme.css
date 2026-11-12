@@ -1,0 +1,111 @@
+/*
+ * FX Swift theme for the A2UI basic catalog.
+ *
+ * The basic components render in light DOM and read `--a2ui-*` variables, so
+ * the brand is set here rather than in component code. Scoped to `.fx-a2ui`.
+ */
+
+.fx-a2ui {
+  --a2ui-font-family: var(--font-body);
+  --a2ui-font-family-title: var(--font-body);
+  --a2ui-font-size: 13.5px;
+  --a2ui-font-size-xs: 11.5px;
+  --a2ui-font-size-s: 13px;
+  --a2ui-font-size-m: 15px;
+  --a2ui-font-size-l: 17px;
+  --a2ui-font-size-xl: 20px;
+  --a2ui-font-size-2xl: 24px;
+  --a2ui-line-height-body: 1.5;
+  --a2ui-line-height-headings: 1.2;
+
+  --a2ui-spacing-xs: 4px;
+  --a2ui-spacing-s: 6px;
+  --a2ui-spacing-m: 10px;
+  --a2ui-spacing-l: 14px;
+  --a2ui-spacing-xl: 20px;
+  --a2ui-row-gap: 8px;
+  --a2ui-column-gap: 6px;
+
+  --a2ui-color-primary: var(--blue);
+  --a2ui-color-primary-hover: var(--blue-hover);
+  --a2ui-color-on-primary: #fff;
+  --a2ui-color-secondary: #f2f1f8;
+  --a2ui-color-secondary-hover: #e9e5fb;
+  --a2ui-color-on-secondary: #29273f;
+  --a2ui-color-surface: #fff;
+  --a2ui-color-on-surface: #1a192d;
+  --a2ui-color-background: transparent;
+  --a2ui-color-on-background: #1a192d;
+  --a2ui-color-border: #e4e1ef;
+  --a2ui-text-color: #1a192d;
+  --a2ui-text-caption-color: #77758f;
+
+  --a2ui-border-radius: 16px;
+  --a2ui-card-padding: 16px;
+  --a2ui-card-margin: 0;
+  --a2ui-card-box-shadow: 0 8px 20px rgba(31, 26, 64, 0.05);
+  --a2ui-card-border: 1px solid #e4e1ef;
+
+  --a2ui-button-border-radius: 999px;
+  --a2ui-button-padding: 5px 12px;
+  --a2ui-button-margin: 0;
+  --a2ui-button-font-weight: 600;
+  --a2ui-button-border: 1px solid #d9d3f7;
+
+  --a2ui-divider-border: 1px solid #eeedf4;
+  --a2ui-divider-spacing: 2px;
+
+  font-family: var(--font-body);
+  color: #1a192d;
+}
+
+/* Cards stack with the gap the workspace uses. */
+.fx-a2ui > * > .a2ui-column,
+.fx-a2ui .a2ui-column:has(> a2ui-card) {
+  gap: 12px;
+}
+
+/* Headline figures: `## 1 GBP = 2,045.25 NGN`. */
+.fx-a2ui .a2ui-text h2 {
+  margin: 2px 0;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.fx-a2ui .a2ui-text p {
+  margin: 0;
+}
+
+/* Range buttons read as a compact segmented pair. */
+.fx-a2ui .a2ui-button {
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.fx-a2ui .a2ui-button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* The SDK wraps caption text in <em>; the site's secondary text is upright. */
+.fx-a2ui .a2ui-text-caption em {
+  font-style: normal;
+}
+
+.fx-a2ui .a2ui-button .a2ui-text.a2ui-text-body {
+  font-size: 12px;
+}
+
+/* Bold figures (amounts received) stay on one line. */
+.fx-a2ui .a2ui-text strong {
+  white-space: nowrap;
+}
+
+/* A header row holding a button group (the chart's range toggle) wraps on
+   narrow screens instead of pushing the buttons off the card. */
+.fx-a2ui a2ui-basic-row:has(> a2ui-basic-row) {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
